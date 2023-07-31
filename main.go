@@ -10,7 +10,6 @@ import (
 type Config struct {
 	KeycloakURL string `json:"url"`
 	ClientID    string `json:"client_id"`
-	// ClientSecret string `json:"client_secret"`
 }
 
 type keycloakAuth struct {
