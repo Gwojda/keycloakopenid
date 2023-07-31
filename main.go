@@ -34,7 +34,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Redirect all requests to the Keycloak login page
-	redirectURI := "http://" + req.Host + req.RequestURI
+	redirectURI := req.URL.String()
 	http.Redirect(rw, req, k.getLoginURL(redirectURI), http.StatusFound)
 }
 
