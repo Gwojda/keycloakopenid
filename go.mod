@@ -1,3 +1,3 @@
-module github.com/gwojda/keycloakopenid
+module github.com/Gwojda/keycloakopenid
 
 go 1.19

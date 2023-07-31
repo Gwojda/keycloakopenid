@@ -15,8 +15,8 @@ First, enable the plugins support in your Traefik configuration file (traefik.ym
 experimental:
   plugins:
     traefikkeycloak:
-      moduleName: "github.com/gwojda/keycloak-openid"
-      version: "v0.1.0"
+      moduleName: "github.com/Gwojda/keycloak-openid"
+      version: "v0.1.5"
 ```
 
 ## Usage
