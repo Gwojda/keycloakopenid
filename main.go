@@ -2,7 +2,6 @@ package keycloakopenid
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -32,6 +31,10 @@ type KeycloakTokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type state struct {
+	RedirectURL string `json:"redirect_url"`
+}
+
 func CreateConfig() *Config {
 	return &Config{}
 }
@@ -54,22 +57,26 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	token, err := k.exchangeAuthCode(req, authCode)
+	stateBase64 := req.URL.Query().Get("state")
+	if stateBase64 == "" {
+		k.redirectToKeycloak(rw, req)
+		return
+	}
 
+	token, err := k.exchangeAuthCode(req, authCode, stateBase64)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	req.Header.Set("Authorization", "Bearer "+token)
-
 	k.next.ServeHTTP(rw, req)
 }
 
-func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string) (string, error) {
-	scheme := req.Header.Get("X-Forwarded-Proto")
-	host := req.Header.Get("X-Forwarded-Host")
-	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
+	stateBytes, _ := base64.StdEncoding.DecodeString(stateBase64)
+	var state state
+	json.Unmarshal(stateBytes, &state)
 
 	resp, err := http.PostForm("https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakReaml+"/protocol/openid-connect/token",
 		url.Values{
@@ -77,7 +84,7 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string) (str
 			"client_id":     {k.config.ClientID},
 			"client_secret": {k.config.ClientSecret},
 			"code":          {authCode},
-			"redirect_uri":  {originalURL},
+			"redirect_uri":  {state.RedirectURL},
 		})
 
 	if err != nil {
@@ -104,6 +111,13 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 	host := req.Header.Get("X-Forwarded-Host")
 	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
 
+	state := state{
+		RedirectURL: originalURL,
+	}
+
+	stateBytes, _ := json.Marshal(state)
+	stateBase64 := base64.StdEncoding.EncodeToString(stateBytes)
+
 	redirectURL := url.URL{
 		Scheme: "https",
 		Host:   k.config.KeycloakURL,
@@ -112,17 +126,11 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 			"response_type": {"code"},
 			"client_id":     {k.config.ClientID},
 			"redirect_uri":  {originalURL},
-			"state":         {randomString()},
+			"state":         {stateBase64},
 		}.Encode(),
 	}
 
 	http.Redirect(rw, req, redirectURL.String(), http.StatusFound)
-}
-
-func randomString() string {
-	bytes := make([]byte, 32)
-	rand.Read(bytes)
-	return base64.URLEncoding.EncodeToString(bytes)
 }
 
 func (k *keycloakAuth) verifyToken(token string) (bool, error) {
