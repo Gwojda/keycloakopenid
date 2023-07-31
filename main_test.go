@@ -11,8 +11,10 @@ import (
 func TestServeHTTP(t *testing.T) {
 	// Setup
 	config := CreateConfig()
-	config.KeycloakURL = "https://auth.bochslerfinance.com/realms/bochsler"
+	config.KeycloakURL = "auth.bochslerfinance.com"
+	config.KeycloakReaml = "bochsler"
 	config.ClientID = "keycloakMiddleware"
+	config.ClientSecret = "uc0yKKpQsOqhggsG4eK7mDU3glT81chn"
 
 	// Create a new instance of our middleware
 	keycloakMiddleware, err := New(context.TODO(), http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -23,7 +25,7 @@ func TestServeHTTP(t *testing.T) {
 	}
 
 	fmt.Printf("%+v\n", keycloakMiddleware)
-	req, err := http.NewRequest("GET", "http://example.com/foo", nil)
+	req, err := http.NewRequest("GET", "https://guidelines.bochslerfinance.com", nil)
 	if err != nil {
 		t.Fatal("Expected no error while creating http request, got:", err)
 	}
