@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -66,13 +67,17 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string) (string, error) {
+	scheme := req.Header.Get("X-Forwarded-Proto")
+	host := req.Header.Get("X-Forwarded-Host")
+	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+
 	resp, err := http.PostForm("https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakReaml+"/protocol/openid-connect/token",
 		url.Values{
 			"grant_type":    {"authorization_code"},
 			"client_id":     {k.config.ClientID},
 			"client_secret": {k.config.ClientSecret},
 			"code":          {authCode},
-			"redirect_uri":  {req.URL.String()},
+			"redirect_uri":  {originalURL},
 		})
 
 	if err != nil {
@@ -95,6 +100,10 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string) (str
 }
 
 func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Request) {
+	scheme := req.Header.Get("X-Forwarded-Proto")
+	host := req.Header.Get("X-Forwarded-Host")
+	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+
 	redirectURL := url.URL{
 		Scheme: "https",
 		Host:   k.config.KeycloakURL,
@@ -102,7 +111,7 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 		RawQuery: url.Values{
 			"response_type": {"code"},
 			"client_id":     {k.config.ClientID},
-			"redirect_uri":  {req.URL.String()},
+			"redirect_uri":  {originalURL},
 			"state":         {randomString()},
 		}.Encode(),
 	}
@@ -123,7 +132,7 @@ func (k *keycloakAuth) verifyToken(token string) (bool, error) {
 		"token": {token},
 	}
 
-	req, err := http.NewRequest(http.MethodPost, k.config.KeycloakURL+"/protocol/openid-connect/token/introspect", strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, "https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakReaml+"/protocol/openid-connect/token/introspect", strings.NewReader(data.Encode()))
 	if err != nil {
 		return false, err
 	}
