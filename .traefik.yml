@@ -17,7 +17,7 @@ bannerPath: foo/banner.png
 # Configuration data for your plugin.
 # This is mandatory,
 # and Plugins Catalog will try to execute the plugin with the data you provide as part of its startup validity tests.
-plugin:
+testData:
   KeycloakURL: "https://my-keycloak-url.com/reamls/<my-realm>"
   ClientID: "my-client-id"
   ClientSecret: "my-client-secret"
