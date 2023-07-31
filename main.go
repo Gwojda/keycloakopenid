@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,6 +22,13 @@ type Config struct {
 type keycloakAuth struct {
 	next   http.Handler
 	config *Config
+}
+
+type KeycloakTokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func CreateConfig() *Config {
@@ -39,24 +47,51 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	authHeader := req.Header.Get("Authorization")
-
-	if authHeader != "" {
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-
-		valid, err := k.verifyToken(token)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if valid {
-			k.next.ServeHTTP(rw, req)
-			return
-		}
+	authCode := req.URL.Query().Get("code")
+	if authCode == "" {
+		k.redirectToKeycloak(rw, req)
+		return
 	}
 
-	k.redirectToKeycloak(rw, req)
+	token, err := k.exchangeAuthCode(req, authCode)
+
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	k.next.ServeHTTP(rw, req)
+}
+
+func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string) (string, error) {
+	resp, err := http.PostForm("https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakReaml+"/protocol/openid-connect/token",
+		url.Values{
+			"grant_type":    {"authorization_code"},
+			"client_id":     {k.config.ClientID},
+			"client_secret": {k.config.ClientSecret},
+			"code":          {authCode},
+			"redirect_uri":  {req.URL.String()},
+		})
+
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return "", errors.New("received bad response from Keycloak: " + string(body))
+	}
+
+	var tokenResponse KeycloakTokenResponse
+	err = json.NewDecoder(resp.Body).Decode(&tokenResponse)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenResponse.AccessToken, nil
 }
 
 func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Request) {
