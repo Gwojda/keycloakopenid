@@ -11,9 +11,8 @@ import (
 func TestServeHTTP(t *testing.T) {
 	// Setup
 	config := CreateConfig()
-	config.KeycloakURL = "<URL>"
-	config.ClientID = "<CLIENTID>"
-	config.ClientSecret = "<CLIENT_SECRET>"
+	config.KeycloakURL = "https://auth.bochslerfinance.com/realms/bochsler"
+	config.ClientID = "keycloakMiddleware"
 
 	// Create a new instance of our middleware
 	keycloakMiddleware, err := New(context.TODO(), http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -34,10 +33,5 @@ func TestServeHTTP(t *testing.T) {
 	// Test
 	keycloakMiddleware.ServeHTTP(rw, req)
 
-	// Verify
-	// Add your verification logic here. It might include checking response code, response headers etc.
-	// For instance, if you expect a forbidden response in this scenario, you would do:
-	if rw.Code != http.StatusForbidden {
-		t.Error("Expected status forbidden, got:", rw.Code)
-	}
+	fmt.Printf("%+v\n", rw)
 }

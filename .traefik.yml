@@ -20,4 +20,3 @@ bannerPath: foo/banner.png
 testData:
   KeycloakURL: "https://my-keycloak-url.com/reamls/<my-realm>"
   ClientID: "my-client-id"
-  ClientSecret: "my-client-secret"

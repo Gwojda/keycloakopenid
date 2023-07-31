@@ -16,7 +16,7 @@ experimental:
   plugins:
     traefikkeycloak:
       moduleName: "github.com/Gwojda/keycloak-openid"
-      version: "v0.1.6"
+      version: "v0.1.7"
 ```
 
 ## Usage
@@ -35,7 +35,6 @@ http:
           plugin:
             KeycloakURL: "https://my-keycloak-url.com"
             ClientID: "my-client-id"
-            ClientSecret: "my-client-secret"
       tls: {}
 ```
 
