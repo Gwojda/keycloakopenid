@@ -1,4 +1,4 @@
-package traefikkeycloak
+package keycloakopenid
 
 import (
 	"context"

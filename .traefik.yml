@@ -1,11 +1,11 @@
 # The name of your plugin as displayed in the Plugins Catalog web UI.
-displayName: keycloak-openid
+displayName: keycloakopenid
 
 # For now, `middleware` is the only type available.
 type: middleware
 
 # The import path of your plugin.
-import: github.com/gwojda/keycloak-openid
+import: github.com/gwojda/keycloakopenid
 
 # A brief description of what your plugin is doing.
 summary: This plugin for Traefik allows it to authenticate requests against Keycloak. It utilizes the Keycloak's client credentials flow to retrieve an access token, which is then set as a bearer token in the Authorization header of the incoming requests. The plugin communicates with Keycloak using the OpenID Connect protocol.
