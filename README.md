@@ -16,7 +16,7 @@ experimental:
   plugins:
     traefikkeycloak:
       moduleName: "github.com/Gwojda/keycloak-openid"
-      version: "v0.1.7"
+      version: "v0.1.8"
 ```
 
 ## Usage
