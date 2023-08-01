@@ -77,20 +77,20 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		fmt.Printf("==>%+v\n", req.URL.Query())
 		token, err := k.exchangeAuthCode(req, authCode, stateBase64)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		fmt.Printf("==>%+v\n", token)
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	newReq := req.Clone(req.Context())
+	req.URL.RawQuery = ""
 
-	newReq.URL.RawQuery = ""
-
-	k.next.ServeHTTP(rw, newReq)
+	k.next.ServeHTTP(rw, req)
 }
 
 func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
@@ -127,9 +127,10 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 }
 
 func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Request) {
-	scheme := req.Header.Get("X-Forwarded-Proto")
-	host := req.Header.Get("X-Forwarded-Host")
-	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+	// scheme := req.Header.Get("X-Forwarded-Proto")
+	// host := req.Header.Get("X-Forwarded-Host")
+	// originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+	originalURL := "https://google.com"
 
 	state := state{
 		RedirectURL: originalURL,
@@ -150,6 +151,7 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 		}.Encode(),
 	}
 
+	fmt.Printf("==>%+v\n", redirectURL.String())
 	http.Redirect(rw, req, redirectURL.String(), http.StatusFound)
 }
 
