@@ -51,26 +51,46 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	authCode := req.URL.Query().Get("code")
-	if authCode == "" {
-		k.redirectToKeycloak(rw, req)
-		return
+	authHeader := req.Header.Get("Authorization")
+	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+
+		ok, err := k.verifyToken(token)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !ok {
+			http.Error(rw, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+	} else {
+		authCode := req.URL.Query().Get("code")
+		if authCode == "" {
+			k.redirectToKeycloak(rw, req)
+			return
+		}
+
+		stateBase64 := req.URL.Query().Get("state")
+		if stateBase64 == "" {
+			k.redirectToKeycloak(rw, req)
+			return
+		}
+
+		token, err := k.exchangeAuthCode(req, authCode, stateBase64)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	stateBase64 := req.URL.Query().Get("state")
-	if stateBase64 == "" {
-		k.redirectToKeycloak(rw, req)
-		return
-	}
+	newReq := req.Clone(req.Context())
 
-	token, err := k.exchangeAuthCode(req, authCode, stateBase64)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	newReq.URL.RawQuery = ""
 
-	req.Header.Set("Authorization", "Bearer "+token)
-	k.next.ServeHTTP(rw, req)
+	k.next.ServeHTTP(rw, newReq)
 }
 
 func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
