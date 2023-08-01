@@ -127,10 +127,9 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 }
 
 func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Request) {
-	// scheme := req.Header.Get("X-Forwarded-Proto")
-	// host := req.Header.Get("X-Forwarded-Host")
-	// originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
-	originalURL := "https://google.com"
+	scheme := req.Header.Get("X-Forwarded-Proto")
+	host := req.Header.Get("X-Forwarded-Host")
+	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
 
 	state := state{
 		RedirectURL: originalURL,
