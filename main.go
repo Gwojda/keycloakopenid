@@ -51,11 +51,9 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	authHeader := req.Header.Get("Authorization")
-	fmt.Printf("authHeader = %+v\n", authHeader)
-
-	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-		token := strings.TrimPrefix(authHeader, "Bearer ")
+	cookie, err := req.Cookie("Authorization")
+	if err == nil && strings.HasPrefix(cookie.Value, "Bearer ") {
+		token := strings.TrimPrefix(cookie.Value, "Bearer ")
 		fmt.Printf("token = %+v\n", token)
 
 		ok, err := k.verifyToken(token)
@@ -91,8 +89,14 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		req.Header.Add("Authorization", "Bearer "+token)
-		fmt.Printf("Adding bearer token %+v\n", token)
+		http.SetCookie(rw, &http.Cookie{
+			Name:     "Authorization",
+			Value:    "Bearer " + token,
+			Secure:   true,
+			HttpOnly: true,
+			Path:     "/",
+			SameSite: http.SameSiteStrictMode,
+		})
 	}
 
 	qry := req.URL.Query()
@@ -105,12 +109,7 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	fmt.Printf("Serve next %+v\n", req.URL)
 	fmt.Printf("Serve next %+v\n", req.URL.RawQuery)
 
-	scheme := req.Header.Get("X-Forwarded-Proto")
-	host := req.Header.Get("X-Forwarded-Host")
-	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
-
-	http.Redirect(rw, req, originalURL, http.StatusFound)
-	// k.next.ServeHTTP(rw, req)
+	k.next.ServeHTTP(rw, req)
 }
 
 func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
