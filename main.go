@@ -72,8 +72,9 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		if !ok {
-			http.Error(rw, "Invalid token", http.StatusUnauthorized)
+			k.redirectToKeycloak(rw, req)
 			return
 		}
 
