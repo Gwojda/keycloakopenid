@@ -51,13 +51,17 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if req.TLS == nil {
-		target := "https://" + req.Host + req.URL.Path
-		if len(req.URL.RawQuery) > 0 {
-			target += "?" + req.URL.RawQuery
-		}
+	if req.URL.Scheme == "http" {
+		req.URL.Scheme = "https"
 
-		http.Redirect(rw, req, target, http.StatusMovedPermanently)
+		scheme := req.Header.Get("X-Forwarded-Proto")
+		host := req.Header.Get("X-Forwarded-Host")
+		originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+
+		http.Redirect(rw, req, originalURL, http.StatusFound)
+		return
+	} else if req.URL.Scheme != "https" {
+		http.Error(rw, req.URL.Scheme, http.StatusBadRequest)
 		return
 	}
 
