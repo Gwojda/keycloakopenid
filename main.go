@@ -66,6 +66,8 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			http.Error(rw, "Invalid token", http.StatusUnauthorized)
 			return
 		}
+
+		k.next.ServeHTTP(rw, req)
 	} else {
 		authCode := req.URL.Query().Get("code")
 		if authCode == "" {
@@ -97,19 +99,20 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			Path:     "/",
 			SameSite: http.SameSiteStrictMode,
 		})
+
+		qry := req.URL.Query()
+		qry.Del("code")
+		qry.Del("state")
+		qry.Del("session_state")
+		req.URL.RawQuery = qry.Encode()
+		req.RequestURI = req.URL.RequestURI()
+
+		scheme := req.Header.Get("X-Forwarded-Proto")
+		host := req.Header.Get("X-Forwarded-Host")
+		originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+
+		http.Redirect(rw, req, originalURL, http.StatusFound)
 	}
-
-	qry := req.URL.Query()
-	qry.Del("code")
-	qry.Del("state")
-	qry.Del("session_state")
-	req.URL.RawQuery = qry.Encode()
-	req.RequestURI = req.URL.RequestURI()
-
-	fmt.Printf("Serve next %+v\n", req.URL)
-	fmt.Printf("Serve next %+v\n", req.URL.RawQuery)
-
-	k.next.ServeHTTP(rw, req)
 }
 
 func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
