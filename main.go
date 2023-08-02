@@ -85,19 +85,24 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		fmt.Printf("exchange auth code called\n")
 		token, err := k.exchangeAuthCode(req, authCode, stateBase64)
-		fmt.Printf("exchange auth code finished\n")
+		fmt.Printf("exchange auth code finished %+v\n", token)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		req.Header.Set("Authorization", "Bearer "+token)
-		fmt.Printf("Adding bearer token\n")
+		req.Header.Add("Authorization", "Bearer "+token)
+		fmt.Printf("Adding bearer token %+v\n", token)
 	}
 
-	req.URL.RawQuery = ""
+	qry := req.URL.Query()
+	qry.Del("code")
+	qry.Del("state")
+	req.URL.RawQuery = qry.Encode()
+	req.RequestURI = req.URL.RequestURI()
 
 	fmt.Printf("Serve next %+v\n", req.URL)
+	fmt.Printf("Serve next %+v\n", req.URL.RawQuery)
 	k.next.ServeHTTP(rw, req)
 }
 
