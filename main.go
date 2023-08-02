@@ -52,10 +52,14 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	authHeader := req.Header.Get("Authorization")
+	fmt.Printf("authHeader = %+v\n", authHeader)
+
 	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimPrefix(authHeader, "Bearer ")
+		fmt.Printf("token = %+v\n", token)
 
 		ok, err := k.verifyToken(token)
+		fmt.Printf("ok = %+v\n", ok)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -67,29 +71,33 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	} else {
 		authCode := req.URL.Query().Get("code")
 		if authCode == "" {
+			fmt.Printf("code is missing, redirect to keycloak\n")
 			k.redirectToKeycloak(rw, req)
 			return
 		}
 
 		stateBase64 := req.URL.Query().Get("state")
 		if stateBase64 == "" {
+			fmt.Printf("state is missing, redirect to keycloak\n")
 			k.redirectToKeycloak(rw, req)
 			return
 		}
 
-		fmt.Printf("==>%+v\n", req.URL.Query())
+		fmt.Printf("exchange auth code called\n")
 		token, err := k.exchangeAuthCode(req, authCode, stateBase64)
+		fmt.Printf("exchange auth code finished\n")
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		fmt.Printf("==>%+v\n", token)
 		req.Header.Set("Authorization", "Bearer "+token)
+		fmt.Printf("Adding bearer token\n")
 	}
 
 	req.URL.RawQuery = ""
 
+	fmt.Printf("Serve next %+v\n", req.URL)
 	k.next.ServeHTTP(rw, req)
 }
 
@@ -150,7 +158,6 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 		}.Encode(),
 	}
 
-	fmt.Printf("==>%+v\n", redirectURL.String())
 	http.Redirect(rw, req, redirectURL.String(), http.StatusFound)
 }
 
