@@ -51,18 +51,20 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if req.URL.Scheme == "http" {
-		req.URL.Scheme = "https"
+	scheme := req.Header.Get("X-Forwarded-Proto")
+	if scheme == "http" {
+		target := "https://" + req.Host + req.URL.Path
+		if len(req.URL.RawQuery) > 0 {
+			target += "?" + req.URL.RawQuery
+		}
 
-		host := req.Header.Get("X-Forwarded-Host")
-		originalURL := fmt.Sprintf("%s://%s%s", req.URL.Scheme, host, req.RequestURI)
-
-		http.Redirect(rw, req, originalURL, http.StatusFound)
+		http.Redirect(rw, req, target, http.StatusMovedPermanently)
 		return
-	} else if req.URL.Scheme != "https" {
-		http.Error(rw, req.URL.Scheme, http.StatusBadRequest)
+	} else if scheme != "https" {
+		http.Error(rw, "Invalid scheme: "+scheme, http.StatusBadRequest)
 		return
 	}
+
 	cookie, err := req.Cookie("Authorization")
 	if err == nil && strings.HasPrefix(cookie.Value, "Bearer ") {
 		token := strings.TrimPrefix(cookie.Value, "Bearer ")
