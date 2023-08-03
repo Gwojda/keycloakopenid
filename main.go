@@ -51,17 +51,13 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	scheme := req.Header.Get("X-Forwarded-Proto")
-	if scheme == "http" {
-		target := "https://" + req.Host + req.URL.Path
-		if len(req.URL.RawQuery) > 0 {
-			target += "?" + req.URL.RawQuery
-		}
-
-		http.Redirect(rw, req, target, http.StatusMovedPermanently)
+	if req.URL.Scheme == "http" {
+		rw.WriteHeader(http.StatusFound)
+		req.URL.Scheme = "https"
+		rw.Header().Set("Location", req.URL.String())
 		return
-	} else if scheme != "https" {
-		http.Error(rw, "Invalid scheme: "+scheme, http.StatusBadRequest)
+	} else if req.URL.Scheme != "https" {
+		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
 

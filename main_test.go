@@ -25,7 +25,7 @@ func TestServeHTTP(t *testing.T) {
 	}
 
 	fmt.Printf("%+v\n", keycloakMiddleware)
-	req, err := http.NewRequest("GET", "https://guidelines.bochslerfinance.com/?state=eyJyZWRpcmVjdF91cmwiOiJodHRwczovL2d1aWRlbGluZXMuYm9jaHNsZXJmaW5hbmNlLmNvbS8ifQ%3D%3D&session_state=da5e569c-aca9-4ea4-a7d7-35eda0fbd3e6&code=24674ca1-f454-4d3a-87cf-2d3b44a73a88.da5e569c-aca9-4ea4-a7d7-35eda0fbd3e6.c54dbe59-cadf-479e-a940-5f58513ee61e", nil)
+	req, err := http.NewRequest("GET", "http://guidelines.bochslerfinance.com/", nil)
 	if err != nil {
 		t.Fatal("Expected no error while creating http request, got:", err)
 	}
