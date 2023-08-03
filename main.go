@@ -54,9 +54,8 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if req.URL.Scheme == "http" {
 		req.URL.Scheme = "https"
 
-		scheme := req.Header.Get("X-Forwarded-Proto")
 		host := req.Header.Get("X-Forwarded-Host")
-		originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+		originalURL := fmt.Sprintf("%s://%s%s", req.URL.Scheme, host, req.RequestURI)
 
 		http.Redirect(rw, req, originalURL, http.StatusFound)
 		return
@@ -64,7 +63,6 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		http.Error(rw, req.URL.Scheme, http.StatusBadRequest)
 		return
 	}
-
 	cookie, err := req.Cookie("Authorization")
 	if err == nil && strings.HasPrefix(cookie.Value, "Bearer ") {
 		token := strings.TrimPrefix(cookie.Value, "Bearer ")
