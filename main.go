@@ -51,16 +51,6 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 }
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if req.URL.Scheme == "http" {
-		rw.WriteHeader(http.StatusFound)
-		req.URL.Scheme = "https"
-		rw.Header().Set("Location", req.URL.String())
-		return
-	} else if req.URL.Scheme != "https" {
-		rw.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	cookie, err := req.Cookie("Authorization")
 	if err == nil && strings.HasPrefix(cookie.Value, "Bearer ") {
 		token := strings.TrimPrefix(cookie.Value, "Bearer ")
