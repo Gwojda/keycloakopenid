@@ -16,7 +16,7 @@ type Config struct {
 	KeycloakURL   string `json:"url"`
 	ClientID      string `json:"client_id"`
 	ClientSecret  string `json:"client_secret"`
-	KeycloakReaml string `json:"keycloak_reaml"`
+	KeycloakRealm string `json:"keycloak_realm"`
 }
 
 type keycloakAuth struct {
@@ -121,7 +121,7 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 	var state state
 	json.Unmarshal(stateBytes, &state)
 
-	resp, err := http.PostForm("https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakReaml+"/protocol/openid-connect/token",
+	resp, err := http.PostForm("https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakRealm+"/protocol/openid-connect/token",
 		url.Values{
 			"grant_type":    {"authorization_code"},
 			"client_id":     {k.config.ClientID},
@@ -164,7 +164,7 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 	redirectURL := url.URL{
 		Scheme: "https",
 		Host:   k.config.KeycloakURL,
-		Path:   "/realms/" + k.config.KeycloakReaml + "/protocol/openid-connect/auth",
+		Path:   "/realms/" + k.config.KeycloakRealm + "/protocol/openid-connect/auth",
 		RawQuery: url.Values{
 			"response_type": {"code"},
 			"client_id":     {k.config.ClientID},
@@ -183,7 +183,7 @@ func (k *keycloakAuth) verifyToken(token string) (bool, error) {
 		"token": {token},
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakReaml+"/protocol/openid-connect/token/introspect", strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, "https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakRealm+"/protocol/openid-connect/token/introspect", strings.NewReader(data.Encode()))
 	if err != nil {
 		return false, err
 	}

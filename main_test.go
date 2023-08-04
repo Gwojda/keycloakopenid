@@ -12,7 +12,7 @@ func TestServeHTTP(t *testing.T) {
 	// Setup
 	config := CreateConfig()
 	config.KeycloakURL = "auth.bochslerfinance.com"
-	config.KeycloakReaml = "bochsler"
+	config.KeycloakRealm = "bochsler"
 	config.ClientID = "keycloakMiddleware"
 	config.ClientSecret = "uc0yKKpQsOqhggsG4eK7mDU3glT81chn"
 
