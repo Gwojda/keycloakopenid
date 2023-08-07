@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -64,6 +65,23 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if !ok {
+			qry := req.URL.Query()
+			qry.Del("code")
+			qry.Del("state")
+			qry.Del("session_state")
+			req.URL.RawQuery = qry.Encode()
+			req.RequestURI = req.URL.RequestURI()
+
+			expiration := time.Now().Add(-24 * time.Hour)
+			newCookie := &http.Cookie{
+				Name:    "Authorization",
+				Value:   "",
+				Path:    "/",
+				Expires: expiration,
+				MaxAge:  -1,
+			}
+			http.SetCookie(rw, newCookie)
+
 			k.redirectToKeycloak(rw, req)
 			return
 		}
