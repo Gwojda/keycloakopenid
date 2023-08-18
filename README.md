@@ -41,9 +41,9 @@ First, enable the plugins support in your Traefik configuration file (traefik.ym
 ```yaml
 experimental:
   plugins:
-    traefikkeycloak:
+    keycloakopenid:
       moduleName: "github.com/Gwojda/keycloakopenid"
-      version: "v0.1.30"
+      version: "v0.1.31"
 ```
 
 Usage
