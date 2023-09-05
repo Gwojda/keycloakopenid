@@ -62,3 +62,11 @@ http:
 ```
 
 The above configuration will authenticate all incoming requests for mywebsite.com with Keycloak.
+
+Alternatively, the configuration can be loaded with environment variables for better synergy with K8s and Keycloak Realm Operator:
+```bash
+KEYCLOAKOPENID_KEYCLOAK_URL = "my-keycloak-url.com"
+KEYCLOAKOPENID_KEYCLOAK_CLIENT_ID = "<CLIENT_ID"
+KEYCLOAKOPENID_KEYCLOAK_CLIENT_SECRET = "<CLIENT_SECRET"
+KEYCLOAKOPENID_KEYCLOAK_REALM = "<REALM"
+```

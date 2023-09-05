@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -41,6 +42,19 @@ func CreateConfig() *Config {
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+	if value, ok := os.LookupEnv("KEYCLOAKOPENID_KEYCLOAK_URL"); ok {
+		config.KeycloakURL = value
+	}
+	if value, ok := os.LookupEnv("KEYCLOAKOPENID_KEYCLOAK_CLIENT_ID"); ok {
+		config.ClientID = value
+	}
+	if value, ok := os.LookupEnv("KEYCLOAKOPENID_KEYCLOAK_CLIENT_SECRET"); ok {
+		config.ClientSecret = value
+	}
+	if value, ok := os.LookupEnv("KEYCLOAKOPENID_KEYCLOAK_REALM"); ok {
+		config.KeycloakRealm = value
+	}
+
 	if config.KeycloakURL == "" || config.ClientID == "" {
 		return nil, errors.New("invalid configuration")
 	}
