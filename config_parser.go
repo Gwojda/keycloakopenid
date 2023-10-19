@@ -100,7 +100,7 @@ func readConfigEnv(config *Config) error {
 		if clientId == "" {
 			return errors.New("ClientIDEnv referenced but NOT set")
 		}
-		config.KeycloakURL = strings.TrimSpace(clientId)
+		config.ClientID = strings.TrimSpace(clientId)
 	}
 	if config.ClientSecretEnv != "" {
 		clientSecret := os.Getenv(config.ClientSecretEnv)
