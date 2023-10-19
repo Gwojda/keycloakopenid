@@ -74,3 +74,17 @@ http:
           ClientSecretFile: "/run/secrets/clientSecret.txt"
           KeycloakRealm: "<REALM"
 ```
+
+Last but not least, each configuration can be read from environment file to support some Kubernetes configurations:
+
+```yaml
+http:
+  middlewares:
+    my-keycloakopenid:
+      plugin:
+        keycloakopenid:
+          KeycloakURLEnv: "MY_KEYCLOAK_URL"
+          ClientIDEnv: "MY_KEYCLOAK_CLIENT_ID"
+          ClientSecretEnv: "MY_KEYCLOAK_CLIENT_SECRET"
+          KeycloakRealmEnv: "MY_KEYCLOAK_REALM"
+```

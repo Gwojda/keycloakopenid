@@ -17,6 +17,10 @@ type Config struct {
 	KeycloakRealm    string `json:"keycloak_realm"`
 	ClientIDFile     string `json:"client_id_file"`
 	ClientSecretFile string `json:"client_secret_file"`
+	KeycloakURLEnv   string `json:"url_env"`
+	ClientIDEnv      string `json:"client_id_env"`
+	ClientSecretEnv  string `json:"client_secret_env"`
+	KeycloakRealmEnv string `json:"keycloak_realm_env"`
 }
 
 type keycloakAuth struct {
@@ -83,11 +87,48 @@ func readSecretFiles(config *Config) error {
 	return nil
 }
 
+func readConfigEnv(config *Config) error {
+	if config.KeycloakURLEnv != "" {
+		keycloakUrl := os.Getenv(config.KeycloakURLEnv)
+		if keycloakUrl == "" {
+			return errors.New("KeycloakURLEnv referenced but NOT set")
+		}
+		config.KeycloakURL = strings.TrimSpace(keycloakUrl)
+	}
+	if config.ClientIDEnv != "" {
+		clientId := os.Getenv(config.ClientIDEnv)
+		if clientId == "" {
+			return errors.New("ClientIDEnv referenced but NOT set")
+		}
+		config.KeycloakURL = strings.TrimSpace(clientId)
+	}
+	if config.ClientSecretEnv != "" {
+		clientSecret := os.Getenv(config.ClientSecretEnv)
+		if clientSecret == "" {
+			return errors.New("ClientSecretEnv referenced but NOT set")
+		}
+		config.ClientSecret = strings.TrimSpace(clientSecret)
+	}
+	if config.KeycloakRealmEnv != "" {
+		keycloakRealm := os.Getenv(config.KeycloakRealmEnv)
+		if keycloakRealm == "" {
+			return errors.New("KeycloakRealmEnv referenced but NOT set")
+		}
+		config.KeycloakRealm = strings.TrimSpace(keycloakRealm)
+	}
+	return nil
+}
+
 func New(uctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	err := readSecretFiles(config)
 	if err != nil {
 		return nil, err
 	}
+	err = readConfigEnv(config)
+	if err != nil {
+		return nil, err
+	}
+
 	if config.ClientID == "" || config.KeycloakRealm == "" {
 		return nil, errors.New("invalid configuration")
 	}
