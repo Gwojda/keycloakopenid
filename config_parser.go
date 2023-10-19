@@ -61,18 +61,24 @@ func parseUrl(rawUrl string) (*url.URL, error) {
 
 func readSecretFiles(config *Config) error {
 	if config.ClientIDFile != "" {
-		clientId, err := os.ReadFile(config.ClientIDFile)
+		id, err := os.ReadFile(config.ClientIDFile)
 		if err != nil {
 			return err
 		}
-		config.ClientID = string(clientId)
+		clientId := string(id)
+		clientId = strings.TrimSpace(clientId)
+		clientId = strings.TrimSuffix(clientId, "\n")
+		config.ClientID = clientId
 	}
 	if config.ClientSecretFile != "" {
-		clientSecret, err := os.ReadFile(config.ClientSecretFile)
+		secret, err := os.ReadFile(config.ClientSecretFile)
 		if err != nil {
 			return err
 		}
-		config.ClientSecret = string(clientSecret)
+		clientSecret := string(secret)
+		clientSecret = strings.TrimSpace(clientSecret)
+		clientSecret = strings.TrimSuffix(clientSecret, "\n")
+		config.ClientSecret = clientSecret
 	}
 	return nil
 }
