@@ -55,10 +55,22 @@ http:
     my-keycloakopenid:
       plugin:
         keycloakopenid:
-          KeycloakURL: "my-keycloak-url.com"
+          KeycloakURL: "my-keycloak-url.com" # <- Also supports complete URL, e.g. https://my-keycloak-url.com/auth
           ClientID: "<CLIENT_ID"
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
 ```
 
-The above configuration will authenticate all incoming requests for mywebsite.com with Keycloak.
+Alternatively, ClientID and ClientSecret can be read from a file to support Docker Secrets and Kubernetes Secrets:
+
+```yaml
+http:
+  middlewares:
+    my-keycloakopenid:
+      plugin:
+        keycloakopenid:
+          KeycloakURL: "https://my-keycloak-url.com/auth"
+          ClientIDFile: "/run/secrets/clientId.txt"
+          ClientSecretFile: "/run/secrets/clientSecret.txt"
+          KeycloakRealm: "<REALM"
+```
