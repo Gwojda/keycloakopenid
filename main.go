@@ -98,13 +98,23 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
 	stateBytes, _ := base64.StdEncoding.DecodeString(stateBase64)
 	var state state
-	json.Unmarshal(stateBytes, &state)
+	err := json.Unmarshal(stateBytes, &state)
+	if err != nil {
+		return "", err
+	}
 
-	resp, err := http.PostForm("https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakRealm+"/protocol/openid-connect/token",
+	target := k.KeycloakURL.JoinPath(
+		"realms",
+		k.KeycloakRealm,
+		"protocol",
+		"openid-connect",
+		"token",
+	)
+	resp, err := http.PostForm(target.String(),
 		url.Values{
 			"grant_type":    {"authorization_code"},
-			"client_id":     {k.config.ClientID},
-			"client_secret": {k.config.ClientSecret},
+			"client_id":     {k.ClientID},
+			"client_secret": {k.ClientSecret},
 			"code":          {authCode},
 			"redirect_uri":  {state.RedirectURL},
 		})
@@ -140,17 +150,19 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 	stateBytes, _ := json.Marshal(state)
 	stateBase64 := base64.StdEncoding.EncodeToString(stateBytes)
 
-	redirectURL := url.URL{
-		Scheme: "https",
-		Host:   k.config.KeycloakURL,
-		Path:   "/realms/" + k.config.KeycloakRealm + "/protocol/openid-connect/auth",
-		RawQuery: url.Values{
-			"response_type": {"code"},
-			"client_id":     {k.config.ClientID},
-			"redirect_uri":  {originalURL},
-			"state":         {stateBase64},
-		}.Encode(),
-	}
+	redirectURL := k.KeycloakURL.JoinPath(
+		"realms",
+		k.KeycloakRealm,
+		"protocol",
+		"openid-connect",
+		"auth",
+	)
+	redirectURL.RawQuery = url.Values{
+		"response_type": {"code"},
+		"client_id":     {k.ClientID},
+		"redirect_uri":  {originalURL},
+		"state":         {stateBase64},
+	}.Encode()
 
 	http.Redirect(rw, req, redirectURL.String(), http.StatusFound)
 }
@@ -162,13 +174,24 @@ func (k *keycloakAuth) verifyToken(token string) (bool, error) {
 		"token": {token},
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakRealm+"/protocol/openid-connect/token/introspect", strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(
+		http.MethodPost,
+		k.KeycloakURL.JoinPath(
+			"realms",
+			k.KeycloakRealm,
+			"protocol",
+			"openid-connect",
+			"token",
+			"introspect",
+		).String(),
+		strings.NewReader(data.Encode()),
+	)
 	if err != nil {
 		return false, err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth(k.config.ClientID, k.config.ClientSecret)
+	req.SetBasicAuth(k.ClientID, k.ClientSecret)
 
 	resp, err := client.Do(req)
 	if err != nil {
