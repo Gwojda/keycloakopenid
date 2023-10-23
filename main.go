@@ -21,11 +21,8 @@ type Config struct {
 }
 
 type keycloakAuth struct {
-	next          http.Handler
-	KeycloakURL   *url.URL
-	ClientID      string
-	ClientSecret  string
-	KeycloakRealm string
+	next   http.Handler
+	config *Config
 }
 
 type KeycloakTokenResponse struct {
@@ -43,39 +40,14 @@ func CreateConfig() *Config {
 	return &Config{}
 }
 
-func parseUrl(rawUrl string) (*url.URL, error) {
-	if rawUrl == "" {
-		return nil, errors.New("invalid empty url")
-	}
-	if !strings.Contains(rawUrl, "://") {
-		rawUrl = "https://" + rawUrl
-	}
-	u, err := url.Parse(rawUrl)
-	if err != nil {
-		return nil, err
-	}
-	if !strings.HasPrefix(u.Scheme, "http") {
-		return nil, fmt.Errorf("%v is not a valid scheme", u.Scheme)
-	}
-	return u, nil
-}
-
-func New(uctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	if config.ClientID == "" || config.KeycloakRealm == "" {
+func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+	if config.KeycloakURL == "" || config.ClientID == "" {
 		return nil, errors.New("invalid configuration")
 	}
 
-	parsedURL, err := parseUrl(config.KeycloakURL)
-	if err != nil {
-		return nil, err
-	}
-
 	return &keycloakAuth{
-		next:          next,
-		KeycloakURL:   parsedURL,
-		ClientID:      config.ClientID,
-		ClientSecret:  config.ClientSecret,
-		KeycloakRealm: config.KeycloakRealm,
+		next:   next,
+		config: config,
 	}, nil
 }
 
@@ -165,23 +137,13 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
 	stateBytes, _ := base64.StdEncoding.DecodeString(stateBase64)
 	var state state
-	err := json.Unmarshal(stateBytes, &state)
-	if err != nil {
-		return "", err
-	}
+	json.Unmarshal(stateBytes, &state)
 
-	target := k.KeycloakURL.JoinPath(
-		"realms",
-		k.KeycloakRealm,
-		"protocol",
-		"openid-connect",
-		"token",
-	)
-	resp, err := http.PostForm(target.String(),
+	resp, err := http.PostForm("https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakRealm+"/protocol/openid-connect/token",
 		url.Values{
 			"grant_type":    {"authorization_code"},
-			"client_id":     {k.ClientID},
-			"client_secret": {k.ClientSecret},
+			"client_id":     {k.config.ClientID},
+			"client_secret": {k.config.ClientSecret},
 			"code":          {authCode},
 			"redirect_uri":  {state.RedirectURL},
 		})
@@ -217,19 +179,17 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 	stateBytes, _ := json.Marshal(state)
 	stateBase64 := base64.StdEncoding.EncodeToString(stateBytes)
 
-	redirectURL := k.KeycloakURL.JoinPath(
-		"realms",
-		k.KeycloakRealm,
-		"protocol",
-		"openid-connect",
-		"auth",
-	)
-	redirectURL.RawQuery = url.Values{
-		"response_type": {"code"},
-		"client_id":     {k.ClientID},
-		"redirect_uri":  {originalURL},
-		"state":         {stateBase64},
-	}.Encode()
+	redirectURL := url.URL{
+		Scheme: "https",
+		Host:   k.config.KeycloakURL,
+		Path:   "/realms/" + k.config.KeycloakRealm + "/protocol/openid-connect/auth",
+		RawQuery: url.Values{
+			"response_type": {"code"},
+			"client_id":     {k.config.ClientID},
+			"redirect_uri":  {originalURL},
+			"state":         {stateBase64},
+		}.Encode(),
+	}
 
 	http.Redirect(rw, req, redirectURL.String(), http.StatusFound)
 }
@@ -241,24 +201,13 @@ func (k *keycloakAuth) verifyToken(token string) (bool, error) {
 		"token": {token},
 	}
 
-	req, err := http.NewRequest(
-		http.MethodPost,
-		k.KeycloakURL.JoinPath(
-			"realms",
-			k.KeycloakRealm,
-			"protocol",
-			"openid-connect",
-			"token",
-			"introspect",
-		).String(),
-		strings.NewReader(data.Encode()),
-	)
+	req, err := http.NewRequest(http.MethodPost, "https://"+k.config.KeycloakURL+"/realms/"+k.config.KeycloakRealm+"/protocol/openid-connect/token/introspect", strings.NewReader(data.Encode()))
 	if err != nil {
 		return false, err
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth(k.ClientID, k.ClientSecret)
+	req.SetBasicAuth(k.config.ClientID, k.config.ClientSecret)
 
 	resp, err := client.Do(req)
 	if err != nil {
