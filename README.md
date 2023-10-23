@@ -43,7 +43,7 @@ experimental:
   plugins:
     keycloakopenid:
       moduleName: "github.com/Gwojda/keycloakopenid"
-      version: "v0.1.31"
+      version: "v0.1.32"
 ```
 
 Usage
