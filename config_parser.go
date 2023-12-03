@@ -11,10 +11,12 @@ import (
 )
 
 type Config struct {
-	KeycloakURL      string `json:"url"`
-	ClientID         string `json:"client_id"`
-	ClientSecret     string `json:"client_secret"`
-	KeycloakRealm    string `json:"keycloak_realm"`
+	KeycloakURL   string `json:"url"`
+	ClientID      string `json:"client_id"`
+	ClientSecret  string `json:"client_secret"`
+	KeycloakRealm string `json:"keycloak_realm"`
+	UserClaimName string `json:"user_claim_name"`
+
 	ClientIDFile     string `json:"client_id_file"`
 	ClientSecretFile string `json:"client_secret_file"`
 	KeycloakURLEnv   string `json:"url_env"`
@@ -29,6 +31,7 @@ type keycloakAuth struct {
 	ClientID      string
 	ClientSecret  string
 	KeycloakRealm string
+	UserClaimName string
 }
 
 type KeycloakTokenResponse struct {
@@ -138,11 +141,17 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		return nil, err
 	}
 
+	userClaimName := "preferred_username"
+	if config.UserClaimName != "" {
+		userClaimName = config.UserClaimName
+	}
+
 	return &keycloakAuth{
 		next:          next,
 		KeycloakURL:   parsedURL,
 		ClientID:      config.ClientID,
 		ClientSecret:  config.ClientSecret,
 		KeycloakRealm: config.KeycloakRealm,
+		UserClaimName: userClaimName,
 	}, nil
 }

@@ -88,3 +88,18 @@ http:
           ClientSecretEnv: "MY_KEYCLOAK_CLIENT_SECRET"
           KeycloakRealmEnv: "MY_KEYCLOAK_REALM"
 ```
+
+This plugins also sets the header <code>X-Forwarded-User</code> with a claim from Keycloak, as it has become reasonably common. Claim name can be modified, default is <code>preferred_username</code>:
+
+```yaml
+http:
+  middlewares:
+    my-keycloakopenid:
+      plugin:
+        keycloakopenid:
+          KeycloakURL: "my-keycloak-url.com" # <- Also supports complete URL, e.g. https://my-keycloak-url.com/auth
+          ClientID: "<CLIENT_ID"
+          ClientSecret: "<CLIENT_SECRET"
+          KeycloakRealm: "<REALM"
+          UserClaimName: "my-uncommon-claim"
+```
