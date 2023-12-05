@@ -46,7 +46,10 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			k.redirectToKeycloak(rw, req)
 			return
 		}
-
+		user, err := extractClaims(token, k.UserClaimName)
+		if err == nil {
+			req.Header.Set("X-Forwarded-User", user)
+		}
 		k.next.ServeHTTP(rw, req)
 	} else {
 		authCode := req.URL.Query().Get("code")
@@ -93,6 +96,26 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		http.Redirect(rw, req, originalURL, http.StatusFound)
 	}
+}
+
+func extractClaims(tokenString string, claimName string) (string, error) {
+	jwtContent := strings.Split(tokenString, ".")
+	if len(jwtContent) < 3 {
+		return "", fmt.Errorf("malformed jwt")
+	}
+
+	var jwtClaims map[string]interface{}
+	decoder := base64.StdEncoding.WithPadding(base64.NoPadding)
+
+	jwt_bytes, _ := decoder.DecodeString(jwtContent[1])
+	if err := json.Unmarshal(jwt_bytes, &jwtClaims); err != nil {
+		return "", err
+	}
+
+	if claimValue, ok := jwtClaims[claimName]; ok {
+		return fmt.Sprintf("%v", claimValue), nil
+	}
+	return "", fmt.Errorf("missing claim %s", claimName)
 }
 
 func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
