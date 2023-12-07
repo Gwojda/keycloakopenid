@@ -11,27 +11,29 @@ import (
 )
 
 type Config struct {
-	KeycloakURL   string `json:"url"`
-	ClientID      string `json:"client_id"`
-	ClientSecret  string `json:"client_secret"`
-	KeycloakRealm string `json:"keycloak_realm"`
-	UserClaimName string `json:"user_claim_name"`
+	KeycloakURL    string `json:"url"`
+	ClientID       string `json:"client_id"`
+	ClientSecret   string `json:"client_secret"`
+	KeycloakRealm  string `json:"keycloak_realm"`
+	UserClaimName  string `json:"user_claim_name"`
+	UserHeaderName string `json:"user_header_name"`
 
-	ClientIDFile     string `json:"client_id_file"`
-	ClientSecretFile string `json:"client_secret_file"`
-	KeycloakURLEnv   string `json:"url_env"`
-	ClientIDEnv      string `json:"client_id_env"`
-	ClientSecretEnv  string `json:"client_secret_env"`
-	KeycloakRealmEnv string `json:"keycloak_realm_env"`
+	ClientIDFile      string `json:"client_id_file"`
+	ClientSecretFile  string `json:"client_secret_file"`
+	KeycloakURLEnv    string `json:"url_env"`
+	ClientIDEnv       string `json:"client_id_env"`
+	ClientSecretEnv   string `json:"client_secret_env"`
+	KeycloakRealmEnv  string `json:"keycloak_realm_env"`
 }
 
 type keycloakAuth struct {
-	next          http.Handler
-	KeycloakURL   *url.URL
-	ClientID      string
-	ClientSecret  string
-	KeycloakRealm string
-	UserClaimName string
+	next           http.Handler
+	KeycloakURL    *url.URL
+	ClientID       string
+	ClientSecret   string
+	KeycloakRealm  string
+	UserClaimName  string
+	UserHeaderName string
 }
 
 type KeycloakTokenResponse struct {
@@ -146,6 +148,11 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		userClaimName = config.UserClaimName
 	}
 
+	userHeaderName := "X-Forwarded-User"
+	if config.UserHeaderName != "" {
+		userHeaderName = config.UserHeaderName
+	}
+
 	return &keycloakAuth{
 		next:          next,
 		KeycloakURL:   parsedURL,
@@ -153,5 +160,6 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		ClientSecret:  config.ClientSecret,
 		KeycloakRealm: config.KeycloakRealm,
 		UserClaimName: userClaimName,
+		UserHeaderName: userHeaderName
 	}, nil
 }
