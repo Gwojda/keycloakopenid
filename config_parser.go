@@ -160,6 +160,6 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		ClientSecret:  config.ClientSecret,
 		KeycloakRealm: config.KeycloakRealm,
 		UserClaimName: userClaimName,
-		UserHeaderName: userHeaderName
+		UserHeaderName: userHeaderName,
 	}, nil
 }
