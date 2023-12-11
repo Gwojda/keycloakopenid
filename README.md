@@ -89,7 +89,8 @@ http:
           KeycloakRealmEnv: "MY_KEYCLOAK_REALM"
 ```
 
-This plugins also sets the header <code>X-Forwarded-User</code> with a claim from Keycloak, as it has become reasonably common. Claim name can be modified, default is <code>preferred_username</code>:
+This plugin also sets a header with a claim from Keycloak, as it has become reasonably common. Claim name and header name can be modified.  
+The default claim is <code>preferred_username</code>, the default header name is <code>X-Forwarded-User</code> :
 
 ```yaml
 http:
@@ -102,4 +103,5 @@ http:
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
           UserClaimName: "my-uncommon-claim"
+          UserHeaderName: "X-Custom-Header"
 ```

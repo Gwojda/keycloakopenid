@@ -48,7 +48,7 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		user, err := extractClaims(token, k.UserClaimName)
 		if err == nil {
-			req.Header.Set("X-Forwarded-User", user)
+			req.Header.Set(k.UserHeaderName, user)
 		}
 		k.next.ServeHTTP(rw, req)
 	} else {
