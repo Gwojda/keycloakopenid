@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/vexxhost/oidc-utils/pkg/discovery"
 )
 
 func (k *ProviderAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -126,13 +128,14 @@ func (k *ProviderAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 		return "", err
 	}
 
-	// discovery url: https://ProviderURL/.well-known/openid-configuration
-	target := k.ProviderURL.JoinPath(
-		"oauth",
-		"v2",
-		"token",
-	)
-	resp, err := http.PostForm(target.String(),
+	discoverydoc, err := discovery.DocumentFromIssuer(k.ProviderURL.String())
+	if err != nil {
+		return "", err
+	}
+
+	TokenEndpoint := discoverydoc.TokenEndpoint
+
+	resp, err := http.PostForm(TokenEndpoint,
 		url.Values{
 			"grant_type":    {"authorization_code"},
 			"client_id":     {k.ClientID},
@@ -154,7 +157,7 @@ func (k *ProviderAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 	var tokenResponse ProviderTokenResponse
 	err = json.NewDecoder(resp.Body).Decode(&tokenResponse)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
 	return tokenResponse.AccessToken, nil
@@ -172,11 +175,17 @@ func (k *ProviderAuth) redirectToProvider(rw http.ResponseWriter, req *http.Requ
 	stateBytes, _ := json.Marshal(state)
 	stateBase64 := base64.StdEncoding.EncodeToString(stateBytes)
 
-	redirectURL := k.ProviderURL.JoinPath(
-		"oauth",
-		"v2",
-		"authorize",
-	)
+	discoverydoc, err := discovery.DocumentFromIssuer(k.ProviderURL.String())
+	if err != nil {
+		panic(err)
+	}
+
+	AuthorizationEndpoint := discoverydoc.AuthorizationEndpoint
+
+	redirectURL, err := url.Parse(AuthorizationEndpoint)
+	if err != nil {
+		panic(err)
+	}
 	redirectURL.RawQuery = url.Values{
 		"response_type": {"code"},
 		"scope":         {"openid profile email"},
@@ -195,13 +204,16 @@ func (k *ProviderAuth) verifyToken(token string) (bool, error) {
 		"token": {token},
 	}
 
+	discoverydoc, err := discovery.DocumentFromIssuer(k.ProviderURL.String())
+	if err != nil {
+		panic(err)
+	}
+
+	IntrospectionEndpoint := discoverydoc.IntrospectionEndpoint
+
 	req, err := http.NewRequest(
 		http.MethodPost,
-		k.ProviderURL.JoinPath(
-			"oauth",
-			"v2",
-			"introspect",
-		).String(),
+		IntrospectionEndpoint,
 		strings.NewReader(data.Encode()),
 	)
 	if err != nil {
