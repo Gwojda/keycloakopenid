@@ -1,14 +1,14 @@
 # The name of your plugin as displayed in the Plugins Catalog web UI.
-displayName: keycloakopenid
+displayName: Traefik OIDC Relying Party
 
 # For now, `middleware` is the only type available.
 type: middleware
 
 # The import path of your plugin.
-import: github.com/Gwojda/keycloakopenid
+import: github.com/alexdelprete/traefik-oidc-relying-party
 
 # A brief description of what your plugin is doing.
-summary: This plugin for Traefik allows it to authenticate requests against Keycloak. It utilizes the Keycloak's client credentials flow to retrieve an access token, which is then set as a bearer token in the Authorization header of the incoming requests. The plugin communicates with Keycloak using the OpenID Connect protocol.
+summary: This plugin for Traefik allows it to authenticate requests against an OpenID Provider. It utilizes the provider's client credentials flow to retrieve an access token, which is then set as a bearer token in the Authorization header of the incoming requests. The plugin communicates with the provider using the OpenID Connect protocol (OIDC).
 
 # Medias associated to the plugin (optional)
 iconPath: foo/icon.png
@@ -18,7 +18,6 @@ bannerPath: foo/banner.png
 # This is mandatory,
 # and Plugins Catalog will try to execute the plugin with the data you provide as part of its startup validity tests.
 testData:
-  KeycloakURL: "my-keycloak-url.com"
-  ClientID: "<CLIENT_ID"
-  ClientSecret: "<CLIENT_SECRET"
-  KeycloakRealm: "<REALM"
+  ProviderURL: "my-provider-url.com"
+  ClientID: "<CLIENT_ID>"
+  ClientSecret: "<CLIENT_SECRET>"

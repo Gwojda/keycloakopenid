@@ -1,4 +1,4 @@
-package keycloakopenid
+package traefik_oidc_relying_party
 
 import (
 	"context"
@@ -11,32 +11,29 @@ import (
 )
 
 type Config struct {
-	KeycloakURL    string `json:"url"`
+	ProviderURL    string `json:"url"`
 	ClientID       string `json:"client_id"`
 	ClientSecret   string `json:"client_secret"`
-	KeycloakRealm  string `json:"keycloak_realm"`
 	UserClaimName  string `json:"user_claim_name"`
 	UserHeaderName string `json:"user_header_name"`
 
-	ClientIDFile      string `json:"client_id_file"`
-	ClientSecretFile  string `json:"client_secret_file"`
-	KeycloakURLEnv    string `json:"url_env"`
-	ClientIDEnv       string `json:"client_id_env"`
-	ClientSecretEnv   string `json:"client_secret_env"`
-	KeycloakRealmEnv  string `json:"keycloak_realm_env"`
+	ClientIDFile     string `json:"client_id_file"`
+	ClientSecretFile string `json:"client_secret_file"`
+	ProviderURLEnv   string `json:"url_env"`
+	ClientIDEnv      string `json:"client_id_env"`
+	ClientSecretEnv  string `json:"client_secret_env"`
 }
 
-type keycloakAuth struct {
+type ProviderAuth struct {
 	next           http.Handler
-	KeycloakURL    *url.URL
+	ProviderURL    *url.URL
 	ClientID       string
 	ClientSecret   string
-	KeycloakRealm  string
 	UserClaimName  string
 	UserHeaderName string
 }
 
-type KeycloakTokenResponse struct {
+type ProviderTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	ExpiresIn    int    `json:"expires_in"`
@@ -93,12 +90,12 @@ func readSecretFiles(config *Config) error {
 }
 
 func readConfigEnv(config *Config) error {
-	if config.KeycloakURLEnv != "" {
-		keycloakUrl := os.Getenv(config.KeycloakURLEnv)
-		if keycloakUrl == "" {
-			return errors.New("KeycloakURLEnv referenced but NOT set")
+	if config.ProviderURLEnv != "" {
+		ProviderURL := os.Getenv(config.ProviderURLEnv)
+		if ProviderURL == "" {
+			return errors.New("ProviderURLEnv referenced but NOT set")
 		}
-		config.KeycloakURL = strings.TrimSpace(keycloakUrl)
+		config.ProviderURL = strings.TrimSpace(ProviderURL)
 	}
 	if config.ClientIDEnv != "" {
 		clientId := os.Getenv(config.ClientIDEnv)
@@ -114,13 +111,6 @@ func readConfigEnv(config *Config) error {
 		}
 		config.ClientSecret = strings.TrimSpace(clientSecret)
 	}
-	if config.KeycloakRealmEnv != "" {
-		keycloakRealm := os.Getenv(config.KeycloakRealmEnv)
-		if keycloakRealm == "" {
-			return errors.New("KeycloakRealmEnv referenced but NOT set")
-		}
-		config.KeycloakRealm = strings.TrimSpace(keycloakRealm)
-	}
 	return nil
 }
 
@@ -134,11 +124,7 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		return nil, err
 	}
 
-	if config.ClientID == "" || config.KeycloakRealm == "" {
-		return nil, errors.New("invalid configuration")
-	}
-
-	parsedURL, err := parseUrl(config.KeycloakURL)
+	parsedURL, err := parseUrl(config.ProviderURL)
 	if err != nil {
 		return nil, err
 	}
@@ -153,13 +139,12 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		userHeaderName = config.UserHeaderName
 	}
 
-	return &keycloakAuth{
-		next:          next,
-		KeycloakURL:   parsedURL,
-		ClientID:      config.ClientID,
-		ClientSecret:  config.ClientSecret,
-		KeycloakRealm: config.KeycloakRealm,
-		UserClaimName: userClaimName,
+	return &ProviderAuth{
+		next:           next,
+		ProviderURL:    parsedURL,
+		ClientID:       config.ClientID,
+		ClientSecret:   config.ClientSecret,
+		UserClaimName:  userClaimName,
 		UserHeaderName: userHeaderName,
 	}, nil
 }

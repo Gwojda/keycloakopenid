@@ -1,4 +1,4 @@
-package keycloakopenid
+package traefik_oidc_relying_party
 
 import (
 	"encoding/base64"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (k *ProviderAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie("Authorization")
 	if err == nil && strings.HasPrefix(cookie.Value, "Bearer ") {
 		token := strings.TrimPrefix(cookie.Value, "Bearer ")
@@ -43,7 +43,7 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 			http.SetCookie(rw, newCookie)
 
-			k.redirectToKeycloak(rw, req)
+			k.redirectToProvider(rw, req)
 			return
 		}
 		user, err := extractClaims(token, k.UserClaimName)
@@ -54,15 +54,15 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	} else {
 		authCode := req.URL.Query().Get("code")
 		if authCode == "" {
-			fmt.Printf("code is missing, redirect to keycloak\n")
-			k.redirectToKeycloak(rw, req)
+			fmt.Printf("code is missing, redirect to Provider\n")
+			k.redirectToProvider(rw, req)
 			return
 		}
 
 		stateBase64 := req.URL.Query().Get("state")
 		if stateBase64 == "" {
-			fmt.Printf("state is missing, redirect to keycloak\n")
-			k.redirectToKeycloak(rw, req)
+			fmt.Printf("state is missing, redirect to Provider\n")
+			k.redirectToProvider(rw, req)
 			return
 		}
 
@@ -118,7 +118,7 @@ func extractClaims(tokenString string, claimName string) (string, error) {
 	return "", fmt.Errorf("missing claim %s", claimName)
 }
 
-func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
+func (k *ProviderAuth) exchangeAuthCode(req *http.Request, authCode string, stateBase64 string) (string, error) {
 	stateBytes, _ := base64.StdEncoding.DecodeString(stateBase64)
 	var state state
 	err := json.Unmarshal(stateBytes, &state)
@@ -126,11 +126,10 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 		return "", err
 	}
 
-	target := k.KeycloakURL.JoinPath(
-		"realms",
-		k.KeycloakRealm,
-		"protocol",
-		"openid-connect",
+	// discovery url: https://ProviderURL/.well-known/openid-configuration
+	target := k.ProviderURL.JoinPath(
+		"oauth",
+		"v2",
 		"token",
 	)
 	resp, err := http.PostForm(target.String(),
@@ -149,10 +148,10 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", errors.New("received bad response from Keycloak: " + string(body))
+		return "", errors.New("received bad response from Provider: " + string(body))
 	}
 
-	var tokenResponse KeycloakTokenResponse
+	var tokenResponse ProviderTokenResponse
 	err = json.NewDecoder(resp.Body).Decode(&tokenResponse)
 	if err != nil {
 		return "", err
@@ -161,7 +160,7 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 	return tokenResponse.AccessToken, nil
 }
 
-func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Request) {
+func (k *ProviderAuth) redirectToProvider(rw http.ResponseWriter, req *http.Request) {
 	scheme := req.Header.Get("X-Forwarded-Proto")
 	host := req.Header.Get("X-Forwarded-Host")
 	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
@@ -173,15 +172,14 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 	stateBytes, _ := json.Marshal(state)
 	stateBase64 := base64.StdEncoding.EncodeToString(stateBytes)
 
-	redirectURL := k.KeycloakURL.JoinPath(
-		"realms",
-		k.KeycloakRealm,
-		"protocol",
-		"openid-connect",
-		"auth",
+	redirectURL := k.ProviderURL.JoinPath(
+		"oauth",
+		"v2",
+		"authorize",
 	)
 	redirectURL.RawQuery = url.Values{
 		"response_type": {"code"},
+		"scope":         {"openid profile email"},
 		"client_id":     {k.ClientID},
 		"redirect_uri":  {originalURL},
 		"state":         {stateBase64},
@@ -190,7 +188,7 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 	http.Redirect(rw, req, redirectURL.String(), http.StatusFound)
 }
 
-func (k *keycloakAuth) verifyToken(token string) (bool, error) {
+func (k *ProviderAuth) verifyToken(token string) (bool, error) {
 	client := &http.Client{}
 
 	data := url.Values{
@@ -199,12 +197,9 @@ func (k *keycloakAuth) verifyToken(token string) (bool, error) {
 
 	req, err := http.NewRequest(
 		http.MethodPost,
-		k.KeycloakURL.JoinPath(
-			"realms",
-			k.KeycloakRealm,
-			"protocol",
-			"openid-connect",
-			"token",
+		k.ProviderURL.JoinPath(
+			"oauth",
+			"v2",
 			"introspect",
 		).String(),
 		strings.NewReader(data.Encode()),

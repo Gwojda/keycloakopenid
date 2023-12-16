@@ -1,3 +1,3 @@
-module github.com/Gwojda/keycloakopenid
+module github.com/alexdelprete/traefik-oidc-relying-party
 
 go 1.19
