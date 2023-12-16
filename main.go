@@ -157,7 +157,7 @@ func (k *ProviderAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 	var tokenResponse ProviderTokenResponse
 	err = json.NewDecoder(resp.Body).Decode(&tokenResponse)
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 
 	return tokenResponse.AccessToken, nil
@@ -177,14 +177,14 @@ func (k *ProviderAuth) redirectToProvider(rw http.ResponseWriter, req *http.Requ
 
 	discoverydoc, err := discovery.DocumentFromIssuer(k.ProviderURL.String())
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 
 	AuthorizationEndpoint := discoverydoc.AuthorizationEndpoint
 
 	redirectURL, err := url.Parse(AuthorizationEndpoint)
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 	redirectURL.RawQuery = url.Values{
 		"response_type": {"code"},
@@ -206,7 +206,7 @@ func (k *ProviderAuth) verifyToken(token string) (bool, error) {
 
 	discoverydoc, err := discovery.DocumentFromIssuer(k.ProviderURL.String())
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 
 	IntrospectionEndpoint := discoverydoc.IntrospectionEndpoint
