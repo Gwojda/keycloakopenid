@@ -23,4 +23,5 @@ testData:
   ClientSecret: "<CLIENT_SECRET"
   KeycloakRealm: "<REALM"
   Scope: "<Scope"
-  TokenCookieName: "<TOKEN_COOKIE_NAME"
+  TokenCookieName: "TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
+  UseAuthHeader: "true|false (default: false)"

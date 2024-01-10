@@ -17,6 +17,7 @@ type Config struct {
 	KeycloakRealm   string `json:"keycloak_realm"`
 	Scope           string `json:"scope"`
 	TokenCookieName string `json:"token_cookie_name"`
+	UseAuthHeader   bool   `json:"use_auth_header"`
 	UserClaimName   string `json:"user_claim_name"`
 	UserHeaderName  string `json:"user_header_name"`
 
@@ -38,6 +39,7 @@ type keycloakAuth struct {
 	KeycloakRealm   string
 	Scope           string
 	TokenCookieName string
+	UseAuthHeader	  bool
 	UserClaimName   string
 	UserHeaderName  string
 }
@@ -168,6 +170,11 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		tokenCookieName = config.TokenCookieName
 	}
 
+	useAuthHeader := false
+	if config.UseAuthHeader {
+		useAuthHeader = true
+	}
+
 	userClaimName := "preferred_username"
 	if config.UserClaimName != "" {
 		userClaimName = config.UserClaimName
@@ -186,6 +193,7 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		KeycloakRealm:   config.KeycloakRealm,
 		Scope:           config.Scope,
 		TokenCookieName: tokenCookieName,
+		UseAuthHeader:   useAuthHeader,
 		UserClaimName:   userClaimName,
 		UserHeaderName:  userHeaderName,
 	}, nil

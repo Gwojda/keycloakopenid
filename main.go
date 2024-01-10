@@ -74,10 +74,11 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		// Not sure why this is being set as a cookie instead of its common use as a header
-		req.Header.Set("Authorization", "Bearer " + token)
+		if k.UseAuthHeader {
+			// Optionally set the Bearer token to the Authorization header.
+			req.Header.Set("Authorization", "Bearer " + token)
+		}
 
-		// Keep to maintain backwards compatibility
 		http.SetCookie(rw, &http.Cookie{
 			Name:     "Authorization",
 			Value:    "Bearer " + token,
