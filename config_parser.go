@@ -129,7 +129,7 @@ func readConfigEnv(config *Config) error {
 		if scope == "" {
 			return errors.New("ScopeEnv referenced but NOT set")
 		}
-		config.Scope = strings.TrimSpace(scope)
+		config.Scope = scope //Do not trim space here as it is common to use space as a separator and should be properly escaped when encoded
 	}
 	return nil
 }
