@@ -25,6 +25,7 @@ type Config struct {
 	ClientIDEnv       string `json:"client_id_env"`
 	ClientSecretEnv   string `json:"client_secret_env"`
 	KeycloakRealmEnv  string `json:"keycloak_realm_env"`
+	ScopeEnv          string `json:"scope_env"`
 }
 
 type keycloakAuth struct {
@@ -122,6 +123,13 @@ func readConfigEnv(config *Config) error {
 			return errors.New("KeycloakRealmEnv referenced but NOT set")
 		}
 		config.KeycloakRealm = strings.TrimSpace(keycloakRealm)
+	}
+	if config.ScopeEnv != "" {
+		scope := os.Getenv(config.ScopeEnv)
+		if scope == "" {
+			return errors.New("ScopeEnv referenced but NOT set")
+		}
+		config.Scope = strings.TrimSpace(scope)
 	}
 	return nil
 }

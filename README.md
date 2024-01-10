@@ -43,7 +43,7 @@ experimental:
   plugins:
     keycloakopenid:
       moduleName: "github.com/Gwojda/keycloakopenid"
-      version: "v0.1.32"
+      version: "v0.1.34"
 ```
 
 Usage
@@ -59,6 +59,7 @@ http:
           ClientID: "<CLIENT_ID"
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
+          Scope: "<SCOPE"
 ```
 
 Alternatively, ClientID and ClientSecret can be read from a file to support Docker Secrets and Kubernetes Secrets:
@@ -73,6 +74,7 @@ http:
           ClientIDFile: "/run/secrets/clientId.txt"
           ClientSecretFile: "/run/secrets/clientSecret.txt"
           KeycloakRealm: "<REALM"
+          Scope: "<SCOPE"
 ```
 
 Last but not least, each configuration can be read from environment file to support some Kubernetes configurations:
@@ -87,6 +89,7 @@ http:
           ClientIDEnv: "MY_KEYCLOAK_CLIENT_ID"
           ClientSecretEnv: "MY_KEYCLOAK_CLIENT_SECRET"
           KeycloakRealmEnv: "MY_KEYCLOAK_REALM"
+          ScopeEnv: "SCOPE"
 ```
 
 This plugin also sets a header with a claim from Keycloak, as it has become reasonably common. Claim name and header name can be modified.  
@@ -102,6 +105,7 @@ http:
           ClientID: "<CLIENT_ID"
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
+          Scope: "<SCOPE"
           UserClaimName: "my-uncommon-claim"
           UserHeaderName: "X-Custom-Header"
 ```
