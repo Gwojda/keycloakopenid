@@ -23,3 +23,4 @@ testData:
   ClientSecret: "<CLIENT_SECRET"
   KeycloakRealm: "<REALM"
   Scope: "<Scope"
+  TokenCookieName: "<TOKEN_COOKIE_NAME"

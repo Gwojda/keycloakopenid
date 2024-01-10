@@ -74,9 +74,23 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		// Not sure why this is being set as a cookie instead of its common use as a header
+		req.Header.Set("Authorization", "Bearer " + token)
+
+		// Keep to maintain backwards compatibility
 		http.SetCookie(rw, &http.Cookie{
 			Name:     "Authorization",
 			Value:    "Bearer " + token,
+			Secure:   true,
+			HttpOnly: true,
+			Path:     "/",
+			SameSite: http.SameSiteStrictMode,
+		})
+
+		// Set the token to a default/custom cookie that doesnt require trimming the Bearer prefix for common integration compatibility
+		http.SetCookie(rw, &http.Cookie{
+			Name:     k.TokenCookieName, // Defaults to "AUTH_TOKEN"
+			Value:    token,
 			Secure:   true,
 			HttpOnly: true,
 			Path:     "/",

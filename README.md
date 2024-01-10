@@ -60,6 +60,7 @@ http:
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
           Scope: "<SCOPE"
+          TokenCookieName: "<TOKEN_COOKIE_NAME"
 ```
 
 Alternatively, ClientID and ClientSecret can be read from a file to support Docker Secrets and Kubernetes Secrets:
@@ -75,6 +76,7 @@ http:
           ClientSecretFile: "/run/secrets/clientSecret.txt"
           KeycloakRealm: "<REALM"
           Scope: "<SCOPE"
+          TokenCookieName: "<TOKEN_COOKIE_NAME"
 ```
 
 Last but not least, each configuration can be read from environment file to support some Kubernetes configurations:
@@ -90,6 +92,7 @@ http:
           ClientSecretEnv: "MY_KEYCLOAK_CLIENT_SECRET"
           KeycloakRealmEnv: "MY_KEYCLOAK_REALM"
           ScopeEnv: "SCOPE"
+          TokenCookieNameEnv: "TOKEN_COOKIE_NAME"
 ```
 
 This plugin also sets a header with a claim from Keycloak, as it has become reasonably common. Claim name and header name can be modified.  

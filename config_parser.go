@@ -11,32 +11,35 @@ import (
 )
 
 type Config struct {
-	KeycloakURL    string `json:"url"`
-	ClientID       string `json:"client_id"`
-	ClientSecret   string `json:"client_secret"`
-	KeycloakRealm  string `json:"keycloak_realm"`
-	Scope          string `json:"scope"`
-	UserClaimName  string `json:"user_claim_name"`
-	UserHeaderName string `json:"user_header_name"`
+	KeycloakURL     string `json:"url"`
+	ClientID        string `json:"client_id"`
+	ClientSecret    string `json:"client_secret"`
+	KeycloakRealm   string `json:"keycloak_realm"`
+	Scope           string `json:"scope"`
+	TokenCookieName string `json:"token_cookie_name"`
+	UserClaimName   string `json:"user_claim_name"`
+	UserHeaderName  string `json:"user_header_name"`
 
-	ClientIDFile      string `json:"client_id_file"`
-	ClientSecretFile  string `json:"client_secret_file"`
-	KeycloakURLEnv    string `json:"url_env"`
-	ClientIDEnv       string `json:"client_id_env"`
-	ClientSecretEnv   string `json:"client_secret_env"`
-	KeycloakRealmEnv  string `json:"keycloak_realm_env"`
-	ScopeEnv          string `json:"scope_env"`
+	ClientIDFile       string `json:"client_id_file"`
+	ClientSecretFile   string `json:"client_secret_file"`
+	KeycloakURLEnv     string `json:"url_env"`
+	ClientIDEnv        string `json:"client_id_env"`
+	ClientSecretEnv    string `json:"client_secret_env"`
+	KeycloakRealmEnv   string `json:"keycloak_realm_env"`
+	ScopeEnv           string `json:"scope_env"`
+	TokenCookieNameEnv string `json:"token_cookie_name_env"`
 }
 
 type keycloakAuth struct {
-	next           http.Handler
-	KeycloakURL    *url.URL
-	ClientID       string
-	ClientSecret   string
-	KeycloakRealm  string
-	Scope          string
-	UserClaimName  string
-	UserHeaderName string
+	next            http.Handler
+	KeycloakURL     *url.URL
+	ClientID        string
+	ClientSecret    string
+	KeycloakRealm   string
+	Scope           string
+	TokenCookieName string
+	UserClaimName   string
+	UserHeaderName  string
 }
 
 type KeycloakTokenResponse struct {
@@ -131,6 +134,13 @@ func readConfigEnv(config *Config) error {
 		}
 		config.Scope = scope //Do not trim space here as it is common to use space as a separator and should be properly escaped when encoded
 	}
+	if config.TokenCookieNameEnv != "" {
+		tokenCookieName := os.Getenv(config.TokenCookieNameEnv)
+		if tokenCookieName == "" {
+			return errors.New("TokenCookieNameEnv referenced but NOT set")
+		}
+		config.TokenCookieName = tokenCookieName
+	}
 	return nil
 }
 
@@ -153,6 +163,11 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		return nil, err
 	}
 
+	tokenCookieName := "AUTH_TOKEN"
+	if config.TokenCookieName != "" {
+		tokenCookieName = config.TokenCookieName
+	}
+
 	userClaimName := "preferred_username"
 	if config.UserClaimName != "" {
 		userClaimName = config.UserClaimName
@@ -164,13 +179,14 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 	}
 
 	return &keycloakAuth{
-		next:          next,
-		KeycloakURL:   parsedURL,
-		ClientID:      config.ClientID,
-		ClientSecret:  config.ClientSecret,
-		KeycloakRealm: config.KeycloakRealm,
-		Scope:         config.Scope,
-		UserClaimName: userClaimName,
-		UserHeaderName: userHeaderName,
+		next:            next,
+		KeycloakURL:     parsedURL,
+		ClientID:        config.ClientID,
+		ClientSecret:    config.ClientSecret,
+		KeycloakRealm:   config.KeycloakRealm,
+		Scope:           config.Scope,
+		TokenCookieName: tokenCookieName,
+		UserClaimName:   userClaimName,
+		UserHeaderName:  userHeaderName,
 	}, nil
 }
