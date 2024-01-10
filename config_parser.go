@@ -139,7 +139,7 @@ func readConfigEnv(config *Config) error {
 		if tokenCookieName == "" {
 			return errors.New("TokenCookieNameEnv referenced but NOT set")
 		}
-		config.TokenCookieName = tokenCookieName
+		config.TokenCookieName = strings.TrimSpace(tokenCookieName)
 	}
 	return nil
 }
