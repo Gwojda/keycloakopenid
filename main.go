@@ -185,6 +185,7 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 		"client_id":     {k.ClientID},
 		"redirect_uri":  {originalURL},
 		"state":         {stateBase64},
+		"scope":				 {k.Scope},
 	}.Encode()
 
 	http.Redirect(rw, req, redirectURL.String(), http.StatusFound)

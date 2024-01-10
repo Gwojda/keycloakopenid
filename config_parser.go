@@ -15,6 +15,7 @@ type Config struct {
 	ClientID       string `json:"client_id"`
 	ClientSecret   string `json:"client_secret"`
 	KeycloakRealm  string `json:"keycloak_realm"`
+	Scope          string `json:"scope"`
 	UserClaimName  string `json:"user_claim_name"`
 	UserHeaderName string `json:"user_header_name"`
 
@@ -32,6 +33,7 @@ type keycloakAuth struct {
 	ClientID       string
 	ClientSecret   string
 	KeycloakRealm  string
+	Scope          string
 	UserClaimName  string
 	UserHeaderName string
 }
@@ -159,6 +161,7 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		ClientID:      config.ClientID,
 		ClientSecret:  config.ClientSecret,
 		KeycloakRealm: config.KeycloakRealm,
+		Scope:         config.Scope,
 		UserClaimName: userClaimName,
 		UserHeaderName: userHeaderName,
 	}, nil

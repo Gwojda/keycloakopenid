@@ -22,3 +22,4 @@ testData:
   ClientID: "<CLIENT_ID"
   ClientSecret: "<CLIENT_SECRET"
   KeycloakRealm: "<REALM"
+  Scope: "<Scope>"
