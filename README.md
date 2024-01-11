@@ -59,7 +59,7 @@ http:
           ClientID: "<CLIENT_ID"
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
-          Scope: "<Scope (space deliminated) (example: 'openid profile email')"
+          Scope: "<Scope [space deliminated] (default: 'openid', example: 'openid profile email')"
           TokenCookieName: "<TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
           UseAuthHeader: "<true|false (default: false)"
 ```
@@ -76,7 +76,7 @@ http:
           ClientIDFile: "/run/secrets/clientId.txt"
           ClientSecretFile: "/run/secrets/clientSecret.txt"
           KeycloakRealm: "<REALM"
-          Scope: "<SCOPE (space deliminated) (example: 'openid profile email')"
+          Scope: "<SCOPE [space deliminated] (default: 'openid', example: 'openid profile email')"
           TokenCookieName: "<TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
           UseAuthHeader: "<true|false (default: false)"
 ```
@@ -93,7 +93,7 @@ http:
           ClientIDEnv: "MY_KEYCLOAK_CLIENT_ID"
           ClientSecretEnv: "MY_KEYCLOAK_CLIENT_SECRET"
           KeycloakRealmEnv: "MY_KEYCLOAK_REALM"
-          ScopeEnv: "SCOPE (space deliminated) (example: 'openid profile email')"
+          ScopeEnv: "SCOPE [space deliminated] (default: 'openid', example: 'openid profile email')"
           TokenCookieNameEnv: "TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
 ```
 
@@ -110,7 +110,7 @@ http:
           ClientID: "<CLIENT_ID"
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
-          Scope: "<SCOPE (space deliminated) (example: 'openid profile email')"
+          Scope: "<SCOPE [space deliminated] (default: 'openid', example: 'openid profile email')"
           TokenCookieName: "TOKEN_COOKIE_NAME (default: "AUTH_TOKEN)"
           UseAuthHeader: "true|false (default: false)"
           UserClaimName: "my-uncommon-claim"

@@ -165,6 +165,10 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		return nil, err
 	}
 
+	if config.Scope == "" {
+		config.Scope = "openid"
+	}
+
 	tokenCookieName := "AUTH_TOKEN"
 	if config.TokenCookieName != "" {
 		tokenCookieName = config.TokenCookieName
