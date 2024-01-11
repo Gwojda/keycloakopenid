@@ -8,7 +8,7 @@ type: middleware
 import: github.com/Gwojda/keycloakopenid
 
 # A brief description of what your plugin is doing.
-summary: This plugin for Traefik allows it to authenticate requests against Keycloak. It utilizes the Keycloak's client credentials flow to retrieve an access token, which is then set as a bearer token in the Authorization header of the incoming requests. The plugin communicates with Keycloak using the OpenID Connect protocol.
+summary: This plugin for Traefik allows it to authenticate requests against Keycloak. It utilizes the Keycloak's client credentials flow to retrieve an access token, which is then set as a bearer token in the Authorization cookie and as a plain token in a custom named cookie of the incoming requests. Optionally sets the Bearer token in the Authorization header. The plugin communicates with Keycloak using the OpenID Connect protocol.
 
 # Medias associated to the plugin (optional)
 iconPath: foo/icon.png
@@ -22,6 +22,6 @@ testData:
   ClientID: "<CLIENT_ID"
   ClientSecret: "<CLIENT_SECRET"
   KeycloakRealm: "<REALM"
-  Scope: "<Scope"
+  Scope: "<Scope (space deliminated) (example: 'openid profile email')"
   TokenCookieName: "TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
   UseAuthHeader: "true|false (default: false)"
