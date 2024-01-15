@@ -50,6 +50,12 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if err == nil {
 			req.Header.Set(k.UserHeaderName, user)
 		}
+
+		if k.UseAuthHeader {
+			// Optionally set the Bearer token to the Authorization header.
+			req.Header.Set("Authorization", "Bearer " + token)
+		}
+		
 		k.next.ServeHTTP(rw, req)
 	} else {
 		authCode := req.URL.Query().Get("code")
@@ -79,24 +85,30 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			req.Header.Set("Authorization", "Bearer " + token)
 		}
 
-		http.SetCookie(rw, &http.Cookie{
+		authCookie := &http.Cookie{
 			Name:     "Authorization",
 			Value:    "Bearer " + token,
 			Secure:   true,
 			HttpOnly: true,
 			Path:     "/",
-			SameSite: http.SameSiteStrictMode,
-		})
+			SameSite: http.SameSiteLaxMode, // Allows requests originating from sibling domains (same parent diff sub domain) to access the cookie
+		}
 
-		// Set the token to a default/custom cookie that doesnt require trimming the Bearer prefix for common integration compatibility
-		http.SetCookie(rw, &http.Cookie{
+		tokenCookie := &http.Cookie{
 			Name:     k.TokenCookieName, // Defaults to "AUTH_TOKEN"
 			Value:    token,
 			Secure:   true,
 			HttpOnly: true,
 			Path:     "/",
-			SameSite: http.SameSiteStrictMode,
-		})
+			SameSite: http.SameSiteLaxMode, // Allows requests originating from sibling domains (same parent diff sub domain) to access the cookie
+		}
+
+		http.SetCookie(rw, authCookie)
+		req.AddCookie(authCookie) // Add the cookie to the request so it is present on the redirect and prevents infite loop of redirects.
+
+		// Set the token to a default/custom cookie that doesnt require trimming the Bearer prefix for common integration compatibility
+		http.SetCookie(rw, tokenCookie)
+		req.AddCookie(tokenCookie) // Add the cookie to the request so it is present on the initial redirect below.
 
 		qry := req.URL.Query()
 		qry.Del("code")
@@ -109,7 +121,7 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		host := req.Header.Get("X-Forwarded-Host")
 		originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
 
-		http.Redirect(rw, req, originalURL, http.StatusFound)
+		http.Redirect(rw, req, originalURL, http.StatusTemporaryRedirect)
 	}
 }
 
@@ -203,7 +215,7 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 		"scope":				 {k.Scope},
 	}.Encode()
 
-	http.Redirect(rw, req, redirectURL.String(), http.StatusFound)
+	http.Redirect(rw, req, redirectURL.String(), http.StatusTemporaryRedirect)
 }
 
 func (k *keycloakAuth) verifyToken(token string) (bool, error) {
