@@ -29,6 +29,7 @@ type Config struct {
 	KeycloakRealmEnv   string `json:"keycloak_realm_env"`
 	ScopeEnv           string `json:"scope_env"`
 	TokenCookieNameEnv string `json:"token_cookie_name_env"`
+	UseAuthHeaderEnv   bool   `json:"use_auth_header_env"`
 }
 
 type keycloakAuth struct {
@@ -143,6 +144,16 @@ func readConfigEnv(config *Config) error {
 		}
 		config.TokenCookieName = strings.TrimSpace(tokenCookieName)
 	}
+	
+	useAuthHeader, exists := os.LookupEnv(config.UseAuthHeaderEnv)
+	
+	if !exists {
+		useAuthHeader := false
+	}
+
+	useAuthHeader = strings.ToLower(useAuthHeader)
+	config.UseAuthHeaderEnv = useAuthHeader == "true" || useAuthHeader == "1"
+	
 	return nil
 }
 

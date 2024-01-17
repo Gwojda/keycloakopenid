@@ -95,6 +95,7 @@ http:
           KeycloakRealmEnv: "MY_KEYCLOAK_REALM"
           ScopeEnv: "SCOPE [space deliminated] (default: 'openid', example: 'openid profile email')"
           TokenCookieNameEnv: "TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
+          UseAuthHeaderEnv: "USE_AUTH_HEADER (default: false)"
 ```
 
 This plugin also sets a header with a claim from Keycloak, as it has become reasonably common. Claim name and header name can be modified.  
