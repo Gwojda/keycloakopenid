@@ -144,15 +144,16 @@ func readConfigEnv(config *Config) error {
 		}
 		config.TokenCookieName = strings.TrimSpace(tokenCookieName)
 	}
-	
-	useAuthHeader, exists := os.LookupEnv(config.UseAuthHeaderEnv)
-	
-	if !exists {
-		useAuthHeader := false
-	}
+	if config.TokenCookieNameEnv != "" {
+		useAuthHeader, exists := os.LookupEnv(config.UseAuthHeaderEnv)
+		
+		if !exists {
+			useAuthHeader := false
+		}
 
-	useAuthHeader = strings.ToLower(useAuthHeader)
-	config.UseAuthHeaderEnv = useAuthHeader == "true" || useAuthHeader == "1"
+		useAuthHeader = strings.ToLower(useAuthHeader)
+		config.UseAuthHeader = useAuthHeader == "true" || useAuthHeader == "1"
+	}
 	
 	return nil
 }
