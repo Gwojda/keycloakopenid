@@ -146,15 +146,12 @@ func readConfigEnv(config *Config) error {
 	}
 	if config.TokenCookieNameEnv != "" {
 		useAuthHeader, exists := os.LookupEnv(config.UseAuthHeaderEnv)
-		
 		if !exists {
 			useAuthHeader := false
 		}
-
 		useAuthHeader = strings.ToLower(useAuthHeader)
 		config.UseAuthHeader = useAuthHeader == "true" || useAuthHeader == "1"
 	}
-	
 	return nil
 }
 
