@@ -22,6 +22,6 @@ testData:
   ClientID: "<CLIENT_ID"
   ClientSecret: "<CLIENT_SECRET"
   KeycloakRealm: "<REALM"
-  Scope: "<Scope [space deliminated] (default: 'openid', example: 'openid profile email')"
-  TokenCookieName: "TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
-  UseAuthHeader: "true|false (default: false)"
+  Scope: "openid"
+  TokenCookieName: "AUTH_TOKEN"
+  UseAuthHeader: false

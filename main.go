@@ -13,6 +13,12 @@ import (
 )
 
 func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	for _, substr := range k.IgnorePathPrefixes {
+			if strings.Contains(req.URL.Path, substr) {
+					k.next.ServeHTTP(rw, req)
+					return
+			}
+	}
 	cookie, err := req.Cookie("Authorization")
 	if err == nil && strings.HasPrefix(cookie.Value, "Bearer ") {
 		token := strings.TrimPrefix(cookie.Value, "Bearer ")

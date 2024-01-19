@@ -62,6 +62,7 @@ http:
           Scope: "<Scope [space deliminated] (default: 'openid', example: 'openid profile email')"
           TokenCookieName: "<TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
           UseAuthHeader: "<true|false (default: false)"
+          IgnorePathPrefixes: "/api,/favicon.ico [comma deliminated] (optional)"
 ```
 
 Alternatively, ClientID and ClientSecret can be read from a file to support Docker Secrets and Kubernetes Secrets:
