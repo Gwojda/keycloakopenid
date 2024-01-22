@@ -11,15 +11,15 @@ import (
 )
 
 type Config struct {
-	KeycloakURL     	 string `json:"url"`
-	ClientID        	 string `json:"client_id"`
-	ClientSecret    	 string `json:"client_secret"`
-	KeycloakRealm   	 string `json:"keycloak_realm"`
+	KeycloakURL        string `json:"url"`
+	ClientID           string `json:"client_id"`
+	ClientSecret       string `json:"client_secret"`
+	KeycloakRealm      string `json:"keycloak_realm"`
 	Scope              string `json:"scope"`
 	TokenCookieName    string `json:"token_cookie_name"`
 	UseAuthHeader      bool   `json:"use_auth_header"`
-	UserClaimName   	 string `json:"user_claim_name"`
-	UserHeaderName  	 string `json:"user_header_name"`
+	UserClaimName      string `json:"user_claim_name"`
+	UserHeaderName     string `json:"user_header_name"`
 	IgnorePathPrefixes string `json:"ignore_path_prefixes"`
 
 	ClientIDFile          string `json:"client_id_file"`
