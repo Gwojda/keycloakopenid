@@ -15,6 +15,7 @@ func TestServeHTTP(t *testing.T) {
 	config.KeycloakRealm = "bochsler"
 	config.ClientID = "keycloakMiddleware"
 	config.ClientSecret = "uc0yKKpQsOqhggsG4eK7mDU3glT81chn"
+	config.Scope = "openid profile email"
 
 	// Create a new instance of our middleware
 	keycloakMiddleware, err := New(context.TODO(), http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

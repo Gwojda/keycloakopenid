@@ -43,7 +43,7 @@ experimental:
   plugins:
     keycloakopenid:
       moduleName: "github.com/Gwojda/keycloakopenid"
-      version: "v0.1.32"
+      version: "v0.1.34"
 ```
 
 Usage
@@ -59,6 +59,10 @@ http:
           ClientID: "<CLIENT_ID"
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
+          Scope: "<Scope [space deliminated] (default: 'openid', example: 'openid profile email')"
+          TokenCookieName: "<TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
+          UseAuthHeader: "<true|false (default: false)"
+          IgnorePathPrefixes: "/api,/favicon.ico [comma deliminated] (optional)"
 ```
 
 Alternatively, ClientID and ClientSecret can be read from a file to support Docker Secrets and Kubernetes Secrets:
@@ -73,6 +77,9 @@ http:
           ClientIDFile: "/run/secrets/clientId.txt"
           ClientSecretFile: "/run/secrets/clientSecret.txt"
           KeycloakRealm: "<REALM"
+          Scope: "<SCOPE [space deliminated] (default: 'openid', example: 'openid profile email')"
+          TokenCookieName: "<TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
+          UseAuthHeader: "<true|false (default: false)"
 ```
 
 Last but not least, each configuration can be read from environment file to support some Kubernetes configurations:
@@ -87,6 +94,9 @@ http:
           ClientIDEnv: "MY_KEYCLOAK_CLIENT_ID"
           ClientSecretEnv: "MY_KEYCLOAK_CLIENT_SECRET"
           KeycloakRealmEnv: "MY_KEYCLOAK_REALM"
+          ScopeEnv: "SCOPE [space deliminated] (default: 'openid', example: 'openid profile email')"
+          TokenCookieNameEnv: "TOKEN_COOKIE_NAME (default: 'AUTH_TOKEN')"
+          UseAuthHeaderEnv: "USE_AUTH_HEADER (default: false)"
 ```
 
 This plugin also sets a header with a claim from Keycloak, as it has become reasonably common. Claim name and header name can be modified.  
@@ -102,6 +112,9 @@ http:
           ClientID: "<CLIENT_ID"
           ClientSecret: "<CLIENT_SECRET"
           KeycloakRealm: "<REALM"
+          Scope: "<SCOPE [space deliminated] (default: 'openid', example: 'openid profile email')"
+          TokenCookieName: "TOKEN_COOKIE_NAME (default: "AUTH_TOKEN)"
+          UseAuthHeader: "true|false (default: false)"
           UserClaimName: "my-uncommon-claim"
           UserHeaderName: "X-Custom-Header"
 ```

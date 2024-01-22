@@ -11,29 +11,41 @@ import (
 )
 
 type Config struct {
-	KeycloakURL    string `json:"url"`
-	ClientID       string `json:"client_id"`
-	ClientSecret   string `json:"client_secret"`
-	KeycloakRealm  string `json:"keycloak_realm"`
-	UserClaimName  string `json:"user_claim_name"`
-	UserHeaderName string `json:"user_header_name"`
+	KeycloakURL        string `json:"url"`
+	ClientID           string `json:"client_id"`
+	ClientSecret       string `json:"client_secret"`
+	KeycloakRealm      string `json:"keycloak_realm"`
+	Scope              string `json:"scope"`
+	TokenCookieName    string `json:"token_cookie_name"`
+	UseAuthHeader      bool   `json:"use_auth_header"`
+	UserClaimName      string `json:"user_claim_name"`
+	UserHeaderName     string `json:"user_header_name"`
+	IgnorePathPrefixes string `json:"ignore_path_prefixes"`
 
-	ClientIDFile      string `json:"client_id_file"`
-	ClientSecretFile  string `json:"client_secret_file"`
-	KeycloakURLEnv    string `json:"url_env"`
-	ClientIDEnv       string `json:"client_id_env"`
-	ClientSecretEnv   string `json:"client_secret_env"`
-	KeycloakRealmEnv  string `json:"keycloak_realm_env"`
+	ClientIDFile          string `json:"client_id_file"`
+	ClientSecretFile      string `json:"client_secret_file"`
+	KeycloakURLEnv        string `json:"url_env"`
+	ClientIDEnv           string `json:"client_id_env"`
+	ClientSecretEnv       string `json:"client_secret_env"`
+	KeycloakRealmEnv      string `json:"keycloak_realm_env"`
+	ScopeEnv              string `json:"scope_env"`
+	TokenCookieNameEnv    string `json:"token_cookie_name_env"`
+	UseAuthHeaderEnv      string `json:"use_auth_header_env"`
+	IgnorePathPrefixesEnv string `json:"ignore_path_prefixes_env"`
 }
 
 type keycloakAuth struct {
-	next           http.Handler
-	KeycloakURL    *url.URL
-	ClientID       string
-	ClientSecret   string
-	KeycloakRealm  string
-	UserClaimName  string
-	UserHeaderName string
+	next               http.Handler
+	KeycloakURL        *url.URL
+	ClientID           string
+	ClientSecret       string
+	KeycloakRealm      string
+	Scope              string
+	TokenCookieName    string
+	UseAuthHeader      bool
+	UserClaimName      string
+	UserHeaderName     string
+	IgnorePathPrefixes []string
 }
 
 type KeycloakTokenResponse struct {
@@ -121,6 +133,35 @@ func readConfigEnv(config *Config) error {
 		}
 		config.KeycloakRealm = strings.TrimSpace(keycloakRealm)
 	}
+	if config.ScopeEnv != "" {
+		scope := os.Getenv(config.ScopeEnv)
+		if scope == "" {
+			return errors.New("ScopeEnv referenced but NOT set")
+		}
+		config.Scope = scope //Do not trim space here as it is common to use space as a separator and should be properly escaped when encoded
+	}
+	if config.TokenCookieNameEnv != "" {
+		tokenCookieName := os.Getenv(config.TokenCookieNameEnv)
+		if tokenCookieName == "" {
+			return errors.New("TokenCookieNameEnv referenced but NOT set")
+		}
+		config.TokenCookieName = strings.TrimSpace(tokenCookieName)
+	}
+	if config.UseAuthHeaderEnv != "" {
+		useAuthHeader, exists := os.LookupEnv(config.UseAuthHeaderEnv)
+		if !exists {
+			useAuthHeader = "false"
+		}
+		useAuthHeader = strings.ToLower(useAuthHeader)
+		config.UseAuthHeader = useAuthHeader == "true" || useAuthHeader == "1"
+	}
+	if config.IgnorePathPrefixesEnv != "" {
+		ignorePathPrefixes := os.Getenv(config.IgnorePathPrefixesEnv)
+		if ignorePathPrefixes == "" {
+			return errors.New("IgnorePathPrefixesEnv referenced but NOT set")
+		}
+		config.IgnorePathPrefixes = strings.TrimSpace(ignorePathPrefixes)
+	}
 	return nil
 }
 
@@ -143,6 +184,20 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		return nil, err
 	}
 
+	if config.Scope == "" {
+		config.Scope = "openid"
+	}
+
+	tokenCookieName := "AUTH_TOKEN"
+	if config.TokenCookieName != "" {
+		tokenCookieName = config.TokenCookieName
+	}
+
+	useAuthHeader := false
+	if config.UseAuthHeader {
+		useAuthHeader = true
+	}
+
 	userClaimName := "preferred_username"
 	if config.UserClaimName != "" {
 		userClaimName = config.UserClaimName
@@ -153,13 +208,22 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		userHeaderName = config.UserHeaderName
 	}
 
+	ignorePathPrefixes := []string{}
+	if config.IgnorePathPrefixes != "" {
+		ignorePathPrefixes = strings.Split(config.IgnorePathPrefixes, ",")
+	}
+
 	return &keycloakAuth{
-		next:          next,
-		KeycloakURL:   parsedURL,
-		ClientID:      config.ClientID,
-		ClientSecret:  config.ClientSecret,
-		KeycloakRealm: config.KeycloakRealm,
-		UserClaimName: userClaimName,
-		UserHeaderName: userHeaderName,
+		next:               next,
+		KeycloakURL:        parsedURL,
+		ClientID:           config.ClientID,
+		ClientSecret:       config.ClientSecret,
+		KeycloakRealm:      config.KeycloakRealm,
+		Scope:              config.Scope,
+		TokenCookieName:    tokenCookieName,
+		UseAuthHeader:      useAuthHeader,
+		UserClaimName:      userClaimName,
+		UserHeaderName:     userHeaderName,
+		IgnorePathPrefixes: ignorePathPrefixes,
 	}, nil
 }
