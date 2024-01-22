@@ -30,7 +30,7 @@ type Config struct {
 	KeycloakRealmEnv      string `json:"keycloak_realm_env"`
 	ScopeEnv              string `json:"scope_env"`
 	TokenCookieNameEnv    string `json:"token_cookie_name_env"`
-	UseAuthHeaderEnv      string   `json:"use_auth_header_env"`
+	UseAuthHeaderEnv      string `json:"use_auth_header_env"`
 	IgnorePathPrefixesEnv string `json:"ignore_path_prefixes_env"`
 }
 
