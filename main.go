@@ -198,6 +198,8 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 	scheme := req.Header.Get("X-Forwarded-Proto")
 	host := req.Header.Get("X-Forwarded-Host")
 	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
+	query := req.URL.Query()
+	kcIdpHint := query.Get("idp")
 
 	state := state{
 		RedirectURL: originalURL,
@@ -213,13 +215,28 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 		"openid-connect",
 		"auth",
 	)
-	redirectURL.RawQuery = url.Values{
-		"response_type": {"code"},
-		"client_id":     {k.ClientID},
-		"redirect_uri":  {originalURL},
-		"state":         {stateBase64},
-		"scope":				 {k.Scope},
-	}.Encode()
+
+	if kcIdpHint == "" && k.KcIdpHint != "" {
+		kcIdpHint = k.KcIdpHint
+	}
+	if kcIdpHint != "" {
+	    redirectURL.RawQuery = url.Values{
+		    "response_type": {"code"},
+		    "client_id":     {k.ClientID},
+		    "redirect_uri":  {originalURL},
+		    "state":         {stateBase64},
+		    "scope":         {k.Scope},
+		    "kc_idp_hint":   {kcIdpHint},
+	    }.Encode()
+    } else {
+        redirectURL.RawQuery = url.Values{
+		    "response_type": {"code"},
+		    "client_id":     {k.ClientID},
+		    "redirect_uri":  {originalURL},
+		    "state":         {stateBase64},
+		    "scope":         {k.Scope},
+	    }.Encode()
+    }
 
 	http.Redirect(rw, req, redirectURL.String(), http.StatusTemporaryRedirect)
 }
