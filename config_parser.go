@@ -16,6 +16,7 @@ type Config struct {
 	ClientSecret       string `json:"client_secret"`
 	KeycloakRealm      string `json:"keycloak_realm"`
 	Scope              string `json:"scope"`
+	KcIdpHint          string `json:"kc_idp_hint"`
 	TokenCookieName    string `json:"token_cookie_name"`
 	UseAuthHeader      bool   `json:"use_auth_header"`
 	UserClaimName      string `json:"user_claim_name"`
@@ -41,6 +42,7 @@ type keycloakAuth struct {
 	ClientSecret       string
 	KeycloakRealm      string
 	Scope              string
+	KcIdpHint          string
 	TokenCookieName    string
 	UseAuthHeader      bool
 	UserClaimName      string
@@ -220,6 +222,7 @@ func New(uctx context.Context, next http.Handler, config *Config, name string) (
 		ClientSecret:       config.ClientSecret,
 		KeycloakRealm:      config.KeycloakRealm,
 		Scope:              config.Scope,
+		KcIdpHint:          config.KcIdpHint,
 		TokenCookieName:    tokenCookieName,
 		UseAuthHeader:      useAuthHeader,
 		UserClaimName:      userClaimName,
